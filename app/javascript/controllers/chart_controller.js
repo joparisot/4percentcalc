@@ -1,11 +1,14 @@
 import { Controller } from "@hotwired/stimulus"
-import Chart from "chart.js"
 
 export default class extends Controller {
   static targets = ["canvas"]
   static values = { data: Array }
 
-  connect() {
+  async connect() {
+    // Dynamically import Chart.js
+    const { Chart, registerables } = await import("https://cdn.jsdelivr.net/npm/chart.js@4.4.1/+esm")
+    Chart.register(...registerables)
+    this.Chart = Chart
     this.renderChart()
   }
 
@@ -25,7 +28,7 @@ export default class extends Controller {
     // Find max value for y-axis
     const maxValue = Math.max(...values) * 1.1
 
-    this.chart = new Chart(ctx, {
+    this.chart = new this.Chart(ctx, {
       type: 'line',
       data: {
         labels: labels,

@@ -12,7 +12,7 @@ export default class extends Controller {
     })
     this.element.classList.add('bg-[#EDE9FE]')
 
-    // Fetch year detail via Turbo
+    // Fetch year detail via Turbo Stream
     const url = `/year_detail/${year}?initial_amount=${initialAmount}&withdrawal_rate=${withdrawalRate}`
 
     fetch(url, {
@@ -22,7 +22,10 @@ export default class extends Controller {
     })
     .then(response => response.text())
     .then(html => {
-      Turbo.renderStreamMessage(html)
+      // Parse and apply the turbo stream
+      const template = document.createElement('template')
+      template.innerHTML = html
+      document.body.append(template.content)
     })
   }
 }
