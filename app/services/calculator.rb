@@ -33,6 +33,10 @@ class Calculator
       if portfolio <= 0
         depleted_at = year_offset
         portfolio = 0
+        # Record 0 for all remaining milestones
+        MILESTONES.each do |m|
+          results[:milestones][m] = 0 if m >= year_offset && !results[:milestones].key?(m)
+        end
         break
       end
 

@@ -111,27 +111,7 @@ export default class extends Controller {
             }
           }
         }
-      },
-      plugins: [{
-        // Draw zero reference line
-        afterDraw: (chart) => {
-          const ctx = chart.ctx
-          const yAxis = chart.scales.y
-          const xAxis = chart.scales.x
-
-          const yPixel = yAxis.getPixelForValue(0)
-
-          ctx.save()
-          ctx.beginPath()
-          ctx.setLineDash([5, 5])
-          ctx.strokeStyle = '#EF4444'
-          ctx.lineWidth = 2
-          ctx.moveTo(xAxis.left, yPixel)
-          ctx.lineTo(xAxis.right, yPixel)
-          ctx.stroke()
-          ctx.restore()
-        }
-      }]
+      }
     })
   }
 }

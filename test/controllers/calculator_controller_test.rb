@@ -30,12 +30,11 @@ class CalculatorControllerTest < ActionDispatch::IntegrationTest
     assert_match "turbo-stream", response.body
   end
 
-  test "year_detail returns turbo stream with chart data" do
-    get year_detail_path(year: 1990), params: { initial_amount: 1_000_000, withdrawal_rate: 4.0 },
-      headers: { "Accept" => "text/vnd.turbo-stream.html" }
+  test "year_detail renders HTML page with chart" do
+    get year_detail_path(year: 1990), params: { initial_amount: 1_000_000, withdrawal_rate: 4.0 }
     assert_response :success
-    assert_match "turbo-stream", response.body
-    assert_match "1990", response.body
-    assert_match "data-controller=\"chart\"", response.body
+    assert_select "h2", /Portfolio Value: Started in 1990/
+    assert_select "[data-controller='chart']"
+    assert_select "a[href*='#{root_path}']", text: /Back to Calculator/
   end
 end

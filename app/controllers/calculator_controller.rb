@@ -4,11 +4,12 @@ class CalculatorController < ApplicationController
     @withdrawal_rate = params[:withdrawal_rate]&.to_f || 4.0
 
     calculator = Calculator.new
-    @results = calculator.backtest_all(
+    results = calculator.backtest_all(
       initial_amount: @initial_amount,
       withdrawal_rate: @withdrawal_rate
     )
-    @stats = calculator.summary_stats(@results, horizon: 30)
+    @results = results.reverse
+    @stats = calculator.summary_stats(results, horizon: 30)
 
     respond_to do |format|
       format.html
@@ -21,11 +22,12 @@ class CalculatorController < ApplicationController
     @withdrawal_rate = params[:withdrawal_rate]&.to_f || 4.0
 
     calculator = Calculator.new
-    @results = calculator.backtest_all(
+    results = calculator.backtest_all(
       initial_amount: @initial_amount,
       withdrawal_rate: @withdrawal_rate
     )
-    @stats = calculator.summary_stats(@results, horizon: 30)
+    @results = results.reverse
+    @stats = calculator.summary_stats(results, horizon: 30)
 
     respond_to do |format|
       format.turbo_stream
@@ -48,7 +50,7 @@ class CalculatorController < ApplicationController
     @chart_data = build_chart_data(@starting_year, @initial_amount, @withdrawal_rate)
 
     respond_to do |format|
-      format.turbo_stream
+      format.html
     end
   end
 
