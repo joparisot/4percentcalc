@@ -2,6 +2,7 @@ class CalculatorController < ApplicationController
   def index
     @initial_amount = params[:initial_amount]&.to_i || 1_000_000
     @withdrawal_rate = params[:withdrawal_rate]&.to_f || 4.0
+    @horizon = (params[:horizon]&.to_i || 30)
 
     calculator = Calculator.new
     results = calculator.backtest_all(
@@ -10,6 +11,7 @@ class CalculatorController < ApplicationController
     )
     @results = results.reverse
     @stats = calculator.summary_stats(results, horizon: 30)
+    @horizon_chart_data = build_horizon_chart_data(@results)
 
     respond_to do |format|
       format.html
@@ -20,6 +22,7 @@ class CalculatorController < ApplicationController
   def calculate
     @initial_amount = params[:initial_amount]&.to_i || 1_000_000
     @withdrawal_rate = params[:withdrawal_rate]&.to_f || 4.0
+    @horizon = (params[:horizon]&.to_i || 30)
 
     calculator = Calculator.new
     results = calculator.backtest_all(
@@ -28,6 +31,7 @@ class CalculatorController < ApplicationController
     )
     @results = results.reverse
     @stats = calculator.summary_stats(results, horizon: 30)
+    @horizon_chart_data = build_horizon_chart_data(@results)
 
     respond_to do |format|
       format.turbo_stream
@@ -58,6 +62,18 @@ class CalculatorController < ApplicationController
   end
 
   private
+
+  def build_horizon_chart_data(results)
+    # Build data for each horizon: { 10 => [{year: 1926, value: 123}, ...], 20 => [...], ... }
+    horizons = [10, 20, 30, 40, 50]
+    horizons.each_with_object({}) do |horizon, data|
+      data[horizon] = results.map do |result|
+        value = result[:milestones][horizon]
+        next nil if value.nil?
+        { year: result[:starting_year], value: value }
+      end.compact
+    end
+  end
 
   def build_chart_data(starting_year, initial_amount, withdrawal_rate)
     data = JSON.parse(File.read(Rails.root.join('lib/data/shiller_data.json')))

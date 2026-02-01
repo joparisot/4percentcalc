@@ -45,6 +45,7 @@
                       data-calculator-target="amountDisplay"
                       data-action="input->calculator#updateAmount" />
                   <%= f.hidden_field :initial_amount, value: @initial_amount, data: { calculator_target: "amountHidden" } %>
+                  <%= f.hidden_field :horizon, value: @horizon, id: "horizon_hidden" %>
                 </div>
                 <button type="button" data-action="click->calculator#incrementAmount" class="w-12 h-12 rounded-lg border border-gray-300 bg-[#FAFAFA] hover:bg-gray-200 text-[#1F2937] font-bold text-xl transition-colors">+</button>
               </div>
@@ -131,6 +132,36 @@
             </div>
           </div>
           <p class="text-3xl font-bold text-[#1F2937] mt-4"><%= format_currency(@stats&.dig(:median_final_value)) %></p>
+        </div>
+      </div>
+    </section>
+
+    <%# Time Horizon Chart %>
+    <section class="w-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mt-8"
+             data-controller="horizon-chart"
+             data-horizon-chart-data-value="<%= @horizon_chart_data.to_json %>"
+             data-horizon-chart-initial-amount-value="<%= @initial_amount %>"
+             data-horizon-chart-horizon-value="<%= @horizon %>">
+      <div class="px-6 py-5 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-[#1F2937]" data-horizon-chart-target="title">Portfolio Value After <%= @horizon %> Years per Starting Year</h2>
+          <p class="text-sm text-[#6B7280] mt-1">Final portfolio value for each historical starting year</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <label for="horizon-select" class="text-sm font-medium text-[#6B7280]">Time Horizon:</label>
+          <select id="horizon-select"
+                  class="px-3 py-2 rounded-lg border border-gray-300 bg-[#FAFAFA] text-[#1F2937] font-medium text-sm focus:ring-2 focus:ring-[#7C3AED]/20 focus:border-[#7C3AED]"
+                  data-horizon-chart-target="dropdown"
+                  data-action="change->horizon-chart#changeHorizon">
+            <% [10, 20, 30, 40, 50].each do |years| %>
+              <option value="<%= years %>" <%= 'selected' if years == @horizon %>><%= years %> years</option>
+            <% end %>
+          </select>
+        </div>
+      </div>
+      <div class="p-6">
+        <div class="h-80">
+          <canvas data-horizon-chart-target="canvas"></canvas>
         </div>
       </div>
     </section>
