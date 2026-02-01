@@ -21,7 +21,20 @@
 <%# Main Content %>
 <main class="flex-grow w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
   <%# Tagline %>
-  <p class="text-center text-[#6B7280] text-lg">Would your retirement plan have survived history?</p>
+  <p class="text-center text-[#6B7280] text-lg">What would have happened in the past to people following the 4% rule?</p>
+
+  <%# Intro %>
+  <section class="max-w-4xl pb-4">
+    <p class="text-lg leading-relaxed text-[#1F2937] pb-2">
+      The 4% rule is a retirement guideline popular in the FIRE (Financial Independence, Retire Early) community: withdraw 4% of your portfolio in year one, then adjust that amount for inflation each year. Originally designed to make your money last 30 years.
+      <a href="https://en.wikipedia.org/wiki/Trinity_study" target="_blank" rel="noopener noreferrer" class="inline-flex items-center ml-2 px-3 py-1 rounded-full bg-[#7C3AED]/5 hover:bg-[#7C3AED]/10 text-[#7C3AED] text-sm font-semibold transition-all border border-[#7C3AED]/20">
+        Learn more
+        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+        </svg>
+      </a>
+    </p>
+  </section>
 
   <%= turbo_frame_tag "calculator_results" do %>
     <%# Controls Section %>
