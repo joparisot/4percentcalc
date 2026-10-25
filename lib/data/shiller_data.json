@@ -483,5 +483,20 @@
     "year": 2023,
     "sp500_return": -0.1193,
     "inflation": 0.0641
+  },
+  {
+    "year": 2024,
+    "sp500_return": 0.2337,
+    "inflation": 0.0309
+  },
+  {
+    "year": 2025,
+    "sp500_return": 0.2573,
+    "inflation": 0.03
+  },
+  {
+    "year": 2026,
+    "sp500_return": 0.1722,
+    "inflation": 0.0239
   }
 ]

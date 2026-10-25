@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["form", "rate", "rateDisplay", "amountDisplay", "amountHidden"]
+  static targets = ["form", "rate", "rateDisplay", "amountDisplay", "amountHidden", "shareLabel"]
 
   connect() {
     this.timeout = null
@@ -49,6 +49,38 @@ export default class extends Controller {
       this.amountHiddenTarget.value = newValue
       this.amountDisplayTarget.value = newValue.toLocaleString()
       this.debounceSubmit()
+    }
+  }
+
+  copyLink() {
+    const params = new URLSearchParams()
+    if (this.hasAmountHiddenTarget) params.set('initial_amount', this.amountHiddenTarget.value)
+    if (this.hasRateTarget) params.set('withdrawal_rate', this.rateTarget.value)
+    const horizon = document.getElementById('horizon_hidden')
+    if (horizon && horizon.value) params.set('horizon', horizon.value)
+
+    const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`
+
+    const onSuccess = () => {
+      if (!this.hasShareLabelTarget) return
+      const label = this.shareLabelTarget
+      const original = label.textContent
+      label.textContent = 'Link copied!'
+      setTimeout(() => { label.textContent = original }, 2000)
+    }
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(url).then(onSuccess)
+    } else {
+      const textarea = document.createElement('textarea')
+      textarea.value = url
+      textarea.style.position = 'fixed'
+      textarea.style.opacity = '0'
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+      onSuccess()
     }
   }
 

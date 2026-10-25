@@ -1,3 +1,6 @@
+<% content_for :title, "Retired in #{@starting_year}: Year-by-Year — The 4% Rule Calculator" %>
+<% content_for :description, "How a #{number_to_percentage(@withdrawal_rate, precision: 1, strip_insignificant_zeros: true)} withdrawal rate on $#{number_with_delimiter(@initial_amount)} would have performed starting in #{@starting_year}, year by year." %>
+
 <%# Header %>
 <header class="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-gray-200">
   <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
