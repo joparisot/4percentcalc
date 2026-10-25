@@ -6,7 +6,7 @@
         <div class="w-8 h-8 rounded-lg bg-[#7C3AED]/10 flex items-center justify-center text-[#7C3AED] text-xl font-bold">
           4%
         </div>
-        <h1 class="text-xl font-bold tracking-tight text-[#1F2937]">The 4% Rule Calculator</h1>
+        <h1 class="text-base sm:text-xl font-bold tracking-tight text-[#1F2937] whitespace-nowrap">The 4% Rule Calculator</h1>
       </div>
       <%= link_to methodology_path, class: "flex items-center gap-2 px-4 py-2 rounded-lg bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 text-[#7C3AED] text-sm font-semibold transition-colors" do %>
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -21,7 +21,7 @@
 <%# Main Content %>
 <main class="flex-grow w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
   <%# Tagline %>
-  <p class="text-center text-[#6B7280] text-lg">What would have happened in the past to people following the 4% rule?</p>
+  <p class="text-center text-[#374151] text-xl font-medium">What would have happened in the past to people following the 4% rule?</p>
 
   <%# Intro %>
   <section class="max-w-4xl pb-4">
@@ -49,7 +49,7 @@
             <label class="flex flex-col gap-2">
               <span class="text-sm font-medium text-[#6B7280]">Starting Portfolio</span>
               <div class="flex items-center gap-2">
-                <button type="button" data-action="click->calculator#decrementAmount" class="w-12 h-12 rounded-lg border border-gray-300 bg-[#FAFAFA] hover:bg-gray-200 text-[#1F2937] font-bold text-xl transition-colors">−</button>
+                <button type="button" aria-label="Decrease starting portfolio" data-action="click->calculator#decrementAmount" class="w-12 h-12 rounded-lg border border-gray-300 bg-[#FAFAFA] hover:bg-gray-200 text-[#1F2937] font-bold text-xl transition-colors">−</button>
                 <div class="relative flex-1">
                   <span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#6B7280] font-medium">$</span>
                   <input type="text"
@@ -60,7 +60,7 @@
                   <%= f.hidden_field :initial_amount, value: @initial_amount, data: { calculator_target: "amountHidden" } %>
                   <%= f.hidden_field :horizon, value: @horizon, id: "horizon_hidden" %>
                 </div>
-                <button type="button" data-action="click->calculator#incrementAmount" class="w-12 h-12 rounded-lg border border-gray-300 bg-[#FAFAFA] hover:bg-gray-200 text-[#1F2937] font-bold text-xl transition-colors">+</button>
+                <button type="button" aria-label="Increase starting portfolio" data-action="click->calculator#incrementAmount" class="w-12 h-12 rounded-lg border border-gray-300 bg-[#FAFAFA] hover:bg-gray-200 text-[#1F2937] font-bold text-xl transition-colors">+</button>
               </div>
             </label>
 
@@ -80,7 +80,8 @@
                     max: 12,
                     step: 0.5,
                     class: "w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#7C3AED]",
-                    data: { calculator_target: "rate", action: "input->calculator#updateRate" } %>
+                    data: { calculator_target: "rate", action: "input->calculator#updateRate" },
+                    aria: { label: "Annual withdrawal rate" } %>
               </div>
               <div class="flex justify-between text-xs text-[#6B7280] font-medium">
                 <span>1%</span>
@@ -103,11 +104,11 @@
       </div>
 
       <%# Stats Grid %>
-      <div class="lg:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="lg:col-span-7 lg:self-start grid grid-cols-2 sm:grid-cols-4 gap-4">
         <%# Success Rate %>
         <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm flex flex-col justify-between hover:border-[#7C3AED]/30 transition-colors">
           <div class="flex items-start justify-between">
-            <p class="text-sm font-medium text-[#6B7280] leading-tight">Success Rate<br><span class="text-xs opacity-75">(30 Years)</span></p>
+            <p class="text-sm font-medium text-[#6B7280] leading-tight whitespace-nowrap">Success Rate<br><span class="text-xs opacity-75">(30 Years)</span></p>
             <div class="p-1 rounded-md bg-emerald-50 text-emerald-500">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -120,7 +121,7 @@
         <%# Worst Year %>
         <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm flex flex-col justify-between hover:border-rose-200 transition-colors">
           <div class="flex items-start justify-between">
-            <p class="text-sm font-medium text-[#6B7280] leading-tight">Worst Start Year</p>
+            <p class="text-sm font-medium text-[#6B7280] leading-tight whitespace-nowrap">Worst Start Year</p>
             <div class="p-1 rounded-md bg-rose-50 text-rose-500">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
@@ -133,7 +134,7 @@
         <%# Best Year %>
         <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm flex flex-col justify-between hover:border-emerald-200 transition-colors">
           <div class="flex items-start justify-between">
-            <p class="text-sm font-medium text-[#6B7280] leading-tight">Best Start Year</p>
+            <p class="text-sm font-medium text-[#6B7280] leading-tight whitespace-nowrap">Best Start Year</p>
             <div class="p-1 rounded-md bg-emerald-50 text-emerald-500">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
@@ -146,7 +147,7 @@
         <%# Median Final Value %>
         <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm flex flex-col justify-between hover:border-[#7C3AED]/30 transition-colors">
           <div class="flex items-start justify-between">
-            <p class="text-sm font-medium text-[#6B7280] leading-tight">Median Value<br><span class="text-xs opacity-75">(30 Years)</span></p>
+            <p class="text-sm font-medium text-[#6B7280] leading-tight whitespace-nowrap">Median Value<br><span class="text-xs opacity-75">(30 Years)</span></p>
             <div class="p-1 rounded-md bg-[#EDE9FE] text-[#7C3AED]">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -229,13 +230,17 @@
               <th class="text-center py-2 px-2">Year 30</th>
               <th class="text-center py-2 px-2">Year 40</th>
               <th class="text-center py-2 px-2">Year 50</th>
+              <th class="w-10"></th>
             </tr>
           </thead>
           <tbody>
             <% @results.each do |result| %>
-              <tr class="border-b border-dashed border-gray-200 last:border-0 hover:bg-[#EDE9FE] cursor-pointer transition-colors"
-                  onclick="window.location='<%= year_detail_path(result[:starting_year], initial_amount: @initial_amount, withdrawal_rate: @withdrawal_rate) %>'">
-                <td class="py-3 px-2 font-semibold text-[#1F2937]"><%= result[:starting_year] %></td>
+              <% detail_url = year_detail_path(result[:starting_year], initial_amount: @initial_amount, withdrawal_rate: @withdrawal_rate) %>
+              <tr class="group border-b border-dashed border-gray-200 last:border-0 hover:bg-[#EDE9FE] cursor-pointer transition-colors"
+                  onclick="window.location='<%= detail_url %>'">
+                <td class="py-3 px-2 font-semibold">
+                  <%= link_to result[:starting_year], detail_url, class: "text-[#1F2937] group-hover:text-[#7C3AED] transition-colors" %>
+                </td>
                 <% [10, 20, 30, 40, 50].each do |milestone| %>
                   <td class="py-3 px-2 text-center">
                     <% value = result[:milestones][milestone] %>
@@ -260,6 +265,11 @@
                     <% end %>
                   </td>
                 <% end %>
+                <td class="py-3 px-2 text-center">
+                  <svg class="w-4 h-4 inline-block text-gray-300 group-hover:text-[#7C3AED] group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </td>
               </tr>
             <% end %>
           </tbody>
@@ -269,9 +279,3 @@
   <% end %>
 </main>
 
-<%# Footer %>
-<footer class="mt-auto py-8 bg-white border-t border-gray-200">
-  <div class="max-w-6xl mx-auto px-4 text-center text-sm text-[#6B7280]">
-    <p>Data based on historical S&P 500 returns from Robert Shiller, Yale University.</p>
-  </div>
-</footer>

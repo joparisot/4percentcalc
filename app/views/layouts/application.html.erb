@@ -65,5 +65,17 @@
 
   <body class="bg-[#FAFAFA] text-[#1F2937] antialiased min-h-screen flex flex-col">
     <%= yield %>
+
+    <%# Footer %>
+    <footer class="mt-auto py-8 bg-white border-t border-gray-200">
+      <div class="max-w-6xl mx-auto px-4 text-center text-sm text-[#6B7280] space-y-2">
+        <p>Data based on historical S&P 500 returns from Robert Shiller, Yale University. For educational purposes only, not financial advice.</p>
+        <p>
+          <%= link_to "Methodology", methodology_path, class: "text-[#7C3AED] font-medium hover:underline" %>
+          <span class="mx-2 text-gray-300">·</span>
+          <%= link_to "Source data", "https://shillerdata.com/", target: "_blank", rel: "noopener noreferrer", class: "text-[#7C3AED] font-medium hover:underline" %>
+        </p>
+      </div>
+    </footer>
   </body>
 </html>
