@@ -132,4 +132,13 @@ class HorizonChartTest < ActionDispatch::SystemTestCase
     select "10 years", from: "horizon-select"
     assert_selector "#{canvas}[data-na-from='']"
   end
+
+  test "legend explains the line colours relative to the starting amount" do
+    visit root_path
+    within "[data-horizon-legend]" do
+      assert_text "Below the starting amount"
+      assert_text "1–4× the starting amount"
+      assert_text "More than 4× the starting amount"
+    end
+  end
 end

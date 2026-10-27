@@ -216,6 +216,12 @@
     <div class="h-80">
       <canvas data-horizon-chart-target="canvas"></canvas>
     </div>
+    <div class="mt-4 flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs font-medium text-[#6B7280]" data-horizon-legend>
+      <% [["#EF4444", "Below the starting amount"], ["#F59E0B", "1–4× the starting amount"], ["#10B981", "More than 4× the starting amount"]].each do |color, label| %>
+        <span class="flex items-center gap-1.5 whitespace-nowrap"><span class="w-4 h-1 rounded-full" style="background-color: <%= color %>"></span><%= label %></span>
+      <% end %>
+      <span class="flex items-center gap-1.5 whitespace-nowrap"><span class="w-4 border-t-2 border-dashed border-[#9CA3AF]"></span>Starting amount (<%= number_to_currency(@initial_amount, precision: 0) %>)</span>
+    </div>
     <p class="hidden mt-3 text-xs text-[#6B7280]" data-horizon-chart-target="scaleNote">Log scale: each labelled line is 10× the one below, so big and small outcomes stay readable. Start years that ran out of money sit on the bottom line.</p>
   </div>
 </section>
