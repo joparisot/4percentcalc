@@ -240,4 +240,9 @@ class CalculatorControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "[data-chart-comparison-label-value='25/75 stocks/bonds']"
   end
+
+  test "comparison table worst-year links leave the calculator turbo frame" do
+    get root_path
+    assert_select "[data-allocation-row] a[href^='/year_detail'][data-turbo-frame='_top']"
+  end
 end
