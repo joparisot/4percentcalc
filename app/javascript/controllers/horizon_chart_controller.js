@@ -63,9 +63,6 @@ export default class extends Controller {
     const initialAmount = this.initialAmountValue
     const horizon = this.horizonValue
 
-    // Calculate y-axis max
-    const maxValue = Math.max(...values, initialAmount) * 1.1
-
     // Create reference line data (same value for all points)
     const referenceLineData = labels.map(() => initialAmount)
 
@@ -82,6 +79,7 @@ export default class extends Controller {
             borderWidth: 3,
             fill: true,
             tension: 0.3,
+            cubicInterpolationMode: 'monotone',
             pointRadius: 0,
             pointHoverRadius: 6,
             pointHoverBackgroundColor: '#7C3AED'
@@ -167,7 +165,7 @@ export default class extends Controller {
           },
           y: {
             min: 0,
-            max: maxValue,
+            grace: '5%',
             grid: {
               color: 'rgba(229, 231, 235, 0.5)'
             },
@@ -176,12 +174,17 @@ export default class extends Controller {
               font: {
                 size: 12
               },
-              callback: (value) => this.formatCurrency(value)
+              callback: (value) => this.formatAxisCurrency(value)
             }
           }
         }
       }
     })
+  }
+
+  formatAxisCurrency(value) {
+    if (value >= 1000000) return `$${parseFloat((value / 1000000).toFixed(1))}M`
+    return this.formatCurrency(value)
   }
 
   formatCurrency(value) {

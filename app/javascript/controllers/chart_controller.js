@@ -25,9 +25,6 @@ export default class extends Controller {
     const labels = data.map(d => `Year ${d.year}`)
     const values = data.map(d => d.value)
 
-    // Find max value for y-axis
-    const maxValue = Math.max(...values) * 1.1
-
     this.chart = new this.Chart(ctx, {
       type: 'line',
       data: {
@@ -40,6 +37,7 @@ export default class extends Controller {
           borderWidth: 3,
           fill: true,
           tension: 0.3,
+          cubicInterpolationMode: 'monotone',
           pointRadius: 0,
           pointHoverRadius: 6,
           pointHoverBackgroundColor: '#7C3AED'
@@ -91,7 +89,7 @@ export default class extends Controller {
           },
           y: {
             min: 0,
-            max: maxValue,
+            grace: '5%',
             grid: {
               color: 'rgba(229, 231, 235, 0.5)'
             },
@@ -102,7 +100,7 @@ export default class extends Controller {
               },
               callback: function(value) {
                 if (value >= 1000000) {
-                  return `$${(value / 1000000).toFixed(1)}M`
+                  return `$${parseFloat((value / 1000000).toFixed(1))}M`
                 } else if (value >= 1000) {
                   return `$${Math.round(value / 1000)}K`
                 }

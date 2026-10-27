@@ -9,18 +9,16 @@
 <%# Header %>
 <header class="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-gray-200">
   <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center justify-between h-16">
-      <%= link_to root_path(initial_amount: @initial_amount, withdrawal_rate: @withdrawal_rate), class: "flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-[#1F2937] text-sm font-semibold transition-colors" do %>
+    <div class="flex items-center justify-between gap-3 h-16">
+      <%= link_to root_path(initial_amount: @initial_amount, withdrawal_rate: @withdrawal_rate), class: "shrink-0 flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-[#1F2937] text-sm font-semibold transition-colors" do %>
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
         </svg>
-        Back to Calculator
+        <span><span class="hidden sm:inline">Back to </span>Calculator</span>
       <% end %>
       <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg bg-[#7C3AED]/10 flex items-center justify-center text-[#7C3AED] text-xl font-bold">
-          4%
-        </div>
-        <p class="text-xl font-bold tracking-tight text-[#1F2937]">The 4% Rule Calculator</p>
+        <%= render "calculator/logo_mark" %>
+        <p class="hidden sm:block text-xl font-bold tracking-tight text-[#1F2937]">The 4% Rule Calculator</p>
       </div>
     </div>
   </div>
@@ -36,10 +34,10 @@
   <section class="bg-white rounded-xl border border-gray-200 shadow-sm p-6" data-controller="chart" data-chart-data-value="<%= @chart_data.to_json %>">
     <h2 class="text-2xl font-bold text-[#1F2937] mb-6">Portfolio Value: Started in <%= @starting_year %></h2>
 
-    <div class="flex justify-between items-center mb-4">
+    <div class="flex flex-wrap justify-between items-center gap-x-4 gap-y-2 mb-4">
       <div class="flex items-center gap-2">
         <div class="w-3 h-3 rounded-full bg-[#7C3AED]"></div>
-        <span class="text-sm text-[#6B7280]">Portfolio Value</span>
+        <span class="text-sm text-[#6B7280] whitespace-nowrap">Portfolio Value</span>
       </div>
       <div class="text-sm text-[#6B7280]">
         Starting: <span class="font-semibold text-[#1F2937]"><%= number_to_currency(@initial_amount, precision: 0) %></span>
