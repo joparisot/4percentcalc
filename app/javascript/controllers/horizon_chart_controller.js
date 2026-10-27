@@ -84,11 +84,13 @@ export default class extends Controller {
 
     if (horizonData.length === 0) return
 
-    // Sort chronologically (oldest to newest)
-    const sortedData = [...horizonData].sort((a, b) => a.year - b.year)
-
-    const labels = sortedData.map(d => d.year)
-    const values = sortedData.map(d => d.value)
+    // Every horizon shares the x-axis of the shortest one; later start years don't have enough history yet.
+    const allYears = (this.dataValue[10] || horizonData).map(d => d.year)
+    const valueByYear = new Map(horizonData.map(d => [d.year, d.value]))
+    const labels = [...new Set([...allYears, ...valueByYear.keys()])].sort((a, b) => a - b)
+    const values = labels.map(year => valueByYear.has(year) ? valueByYear.get(year) : null)
+    const naIndex = values.findIndex((v, i) => v === null && values.slice(i).every(rest => rest === null))
+    this.canvasTarget.dataset.naFrom = naIndex === -1 ? "" : labels[naIndex]
     const initialAmount = this.initialAmountValue
     const horizon = this.horizonValue
     const scale = this.scale
@@ -96,14 +98,15 @@ export default class extends Controller {
     // Log axes can't show $0, so depleted years sit on the axis floor (the tooltip still says they ran out).
     const smallest = Math.min(...values.filter(v => v > 0), initialAmount)
     const floor = 10 ** Math.floor(Math.log10(smallest))
-    const plotted = log ? values.map(v => Math.max(v, floor)) : values
+    const plotted = log ? values.map(v => v === null ? null : Math.max(v, floor)) : values
     this.updateScaleControls(scale)
 
     // Create reference line data (same value for all points)
-    const referenceLineData = labels.map(() => initialAmount)
+    const referenceLineData = values.map(v => v === null ? null : initialAmount)
 
     this.chart = new this.Chart(ctx, {
       type: 'line',
+      plugins: [this.naZonePlugin(naIndex)],
       data: {
         labels: labels,
         datasets: [
@@ -217,6 +220,34 @@ export default class extends Controller {
         }
       }
     })
+  }
+
+  naZonePlugin(naIndex) {
+    return {
+      id: 'naZone',
+      beforeDatasetsDraw: (chart) => {
+        if (naIndex <= 0) return
+        const { ctx, chartArea, scales: { x } } = chart
+        const left = (x.getPixelForValue(naIndex - 1) + x.getPixelForValue(naIndex)) / 2
+        const width = chartArea.right - left
+        const centre = left + width / 2
+
+        ctx.save()
+        ctx.fillStyle = 'rgba(156, 163, 175, 0.15)'
+        ctx.fillRect(left, chartArea.top, width, chartArea.bottom - chartArea.top)
+        ctx.fillStyle = '#9CA3AF'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.font = '600 14px Inter, system-ui, sans-serif'
+        const middle = (chartArea.top + chartArea.bottom) / 2
+        ctx.fillText('N/A', centre, middle)
+        if (width > 120) {
+          ctx.font = '12px Inter, system-ui, sans-serif'
+          ctx.fillText('Not enough history yet', centre, middle + 18)
+        }
+        ctx.restore()
+      }
+    }
   }
 
   isRoundLogTick(value) {
