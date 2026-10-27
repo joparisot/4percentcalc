@@ -140,4 +140,39 @@ class CalculatorTest < ActiveSupport::TestCase
     rate = ->(fee) { @calculator.summary_stats(@calculator.backtest_all(initial_amount: 1_000_000, withdrawal_rate: 4, fee: fee), horizon: 30)[:success_rate] }
     assert_operator rate.call(1), :<, rate.call(0)
   end
+
+
+  test "every data year has a bond return" do
+    assert @calculator.data_by_year.values.all? { |d| d["bond_return"].is_a?(Numeric) }
+  end
+
+  test "stock allocation blends S&P 500 and bond returns" do
+    year = @calculator.data_by_year[2008]
+    assert_in_delta year["sp500_return"], @calculator.annual_return(year, 100), 1e-9
+    assert_in_delta year["bond_return"], @calculator.annual_return(year, 0), 1e-9
+    assert_in_delta (year["sp500_return"] + year["bond_return"]) / 2, @calculator.annual_return(year, 50), 1e-9
+  end
+
+  test "default backtest is 100% stocks" do
+    default = @calculator.backtest(initial_amount: 1_000_000, withdrawal_rate: 4, starting_year: 1966)
+    stocks = @calculator.backtest(initial_amount: 1_000_000, withdrawal_rate: 4, starting_year: 1966, stock_allocation: 100)
+    assert_equal stocks, default
+  end
+
+  test "trinity mixes at 4% over 30 years" do
+    rates = Calculator::TRINITY_ALLOCATIONS.index_with do |allocation|
+      results = @calculator.backtest_all(initial_amount: 1_000_000, withdrawal_rate: 4, stock_allocation: allocation)
+      @calculator.summary_stats(results, horizon: 30)[:success_rate]
+    end
+    assert_equal 94.4, rates[100]
+    assert rates[50] > rates[0], "A 50/50 mix should beat all bonds"
+    assert rates[0] < 50, "All bonds should fail most 30-year retirements at 4%"
+  end
+
+  test "comparison allocation falls back to 50/50" do
+    assert_equal 75, Calculator.comparison_allocation("75")
+    assert_equal 50, Calculator.comparison_allocation(nil)
+    assert_equal 50, Calculator.comparison_allocation("100")
+    assert_equal 50, Calculator.comparison_allocation("33")
+  end
 end

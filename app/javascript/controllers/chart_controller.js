@@ -5,6 +5,8 @@ export default class extends Controller {
   static targets = ["canvas"]
   static values = {
     data: Array,
+    comparison: Array,
+    comparisonLabel: String,
     events: { type: Array, default: [] },
     startingYear: Number
   }
@@ -27,11 +29,15 @@ export default class extends Controller {
     const ctx = this.canvasTarget.getContext('2d')
     const data = this.dataValue
 
-    const labels = data.map(d => `Year ${d.year}`)
+    const comparison = this.comparisonValue
+    // Either portfolio may run out first, so the x-axis spans the longer of the two.
+    const length = Math.max(data.length, comparison.length)
+    const labels = Array.from({ length }, (_, i) => `Year ${i}`)
     const values = data.map(d => d.value)
+    const comparisonValues = comparison.map(d => d.value)
     // Point k is the balance after k years, so an event in calendar year Y sits between points Y - start and Y - start + 1.
     const start = this.startingYearValue
-    const events = this.eventsValue.filter(e => e.year >= start && e.year - start < data.length - 1)
+    const events = this.eventsValue.filter(e => e.year >= start && e.year - start < length - 1)
     const eventByYear = new Map(events.map(e => [e.year, e.label]))
     this.canvasTarget.dataset.markedEvents = events.map(e => e.year).join(",")
 
@@ -41,7 +47,7 @@ export default class extends Controller {
       data: {
         labels: labels,
         datasets: [{
-          label: 'Portfolio Value',
+          label: '100% S&P 500',
           data: values,
           borderColor: '#7C3AED',
           backgroundColor: 'rgba(124, 58, 237, 0.1)',
@@ -52,6 +58,18 @@ export default class extends Controller {
           pointRadius: 0,
           pointHoverRadius: 6,
           pointHoverBackgroundColor: '#7C3AED'
+        }, {
+          label: this.comparisonLabelValue,
+          data: comparisonValues,
+          borderColor: '#2563EB',
+          backgroundColor: '#2563EB',
+          borderWidth: 2,
+          fill: false,
+          tension: 0.3,
+          cubicInterpolationMode: 'monotone',
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          pointHoverBackgroundColor: '#2563EB'
         }]
       },
       options: {
@@ -74,17 +92,19 @@ export default class extends Controller {
             displayColors: false,
             callbacks: {
               footer: (context) => {
-                const event = eventByYear.get(start + data[context[0].dataIndex].year - 1)
+                const event = eventByYear.get(start + context[0].dataIndex - 1)
                 return event ? `During this year: ${event}` : ''
               },
               label: function(context) {
+                const name = context.dataset.label
                 const value = context.raw
+                if (value <= 0) return `${name}: ran out`
                 if (value >= 1000000) {
-                  return `$${(value / 1000000).toFixed(1)}M`
+                  return `${name}: $${(value / 1000000).toFixed(1)}M`
                 } else if (value >= 1000) {
-                  return `$${Math.round(value / 1000)}K`
+                  return `${name}: $${Math.round(value / 1000)}K`
                 }
-                return `$${value}`
+                return `${name}: $${value}`
               }
             }
           }

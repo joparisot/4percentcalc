@@ -1,0 +1,62 @@
+<%# Trinity study comparison: the same scenario across its stock/bond mixes %>
+<section id="stocks-vs-bonds" class="w-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mt-8" data-controller="allocation">
+  <div class="px-6 py-5 border-b border-gray-200">
+    <h2 class="text-xl font-bold text-[#1F2937]">S&amp;P 500 vs. Trinity Study Stock/Bond Mixes</h2>
+    <p class="text-sm text-[#6B7280] mt-1">
+      The <a href="https://en.wikipedia.org/wiki/Trinity_study" target="_blank" rel="noopener noreferrer" class="text-[#7C3AED] font-medium hover:underline">Trinity study</a>
+      tested the 4% rule on portfolios split between stocks and bonds, rebalanced every year. Same scenario, 30 years. Pick a mix to compare it with the S&amp;P 500 on the charts below.
+    </p>
+  </div>
+  <div class="relative overflow-x-auto custom-scrollbar p-6">
+    <table class="w-full min-w-[560px]" data-allocation-table>
+      <thead>
+        <tr class="text-xs font-bold uppercase tracking-wider text-[#6B7280]">
+          <th class="text-left py-2 px-2">Portfolio</th>
+          <th class="text-right py-2 px-2">Success Rate</th>
+          <th class="text-right py-2 px-2">Worst Start Year</th>
+          <th class="text-right py-2 px-2">Median Value</th>
+          <th class="text-right py-2 px-2 w-32"><span class="sr-only">Compare</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @allocation_rows.each do |row| %>
+          <% allocation = row[:allocation] %>
+          <% selected = allocation == @comparison_allocation %>
+          <% baseline = allocation == 100 %>
+          <tr class="border-b border-dashed border-gray-200 last:border-0 <%= 'bg-blue-50' if selected %> <%= 'bg-[#EDE9FE]/60' if baseline %>"
+              data-allocation-row="<%= allocation %>" <%= 'data-selected' if selected %>>
+            <td class="py-3 px-2">
+              <div class="flex items-center gap-3">
+                <span class="w-3 h-3 rounded-full shrink-0 <%= baseline ? 'bg-[#7C3AED]' : (selected ? 'bg-[#2563EB]' : 'bg-gray-200') %>"></span>
+                <span class="flex flex-col">
+                  <span class="font-semibold text-[#1F2937]"><%= baseline ? "100% S&P 500" : "#{allocation}% stocks / #{100 - allocation}% bonds" %></span>
+                  <% if baseline %><span class="text-xs text-[#6B7280]">What the rest of this page shows</span><% end %>
+                </span>
+              </div>
+            </td>
+            <td class="py-3 px-2 text-right font-bold text-[#1F2937]" data-allocation-success><%= row[:stats]&.dig(:success_rate) || 0 %>%</td>
+            <td class="py-3 px-2 text-right text-[#1F2937]">
+              <% if (worst = row[:stats]&.dig(:worst_year)) %>
+                <%= link_to worst, year_detail_path(worst, year_detail_scenario_params(initial_amount: @initial_amount, withdrawal_rate: @withdrawal_rate, fee: @fee, stock_allocation: (allocation unless baseline))), class: "hover:text-[#7C3AED] hover:underline", data: { turbo_frame: "_top" } %>
+              <% else %>N/A<% end %>
+            </td>
+            <td class="py-3 px-2 text-right text-[#1F2937]"><%= format_currency(row[:stats]&.dig(:median_final_value)) %></td>
+            <td class="py-3 px-2 text-right">
+              <% if baseline %>
+                <span class="text-xs font-semibold text-[#7C3AED]">Baseline</span>
+              <% elsif selected %>
+                <span class="inline-flex items-center gap-1 text-xs font-semibold text-[#2563EB]">Comparing</span>
+              <% else %>
+                <button type="button"
+                        class="px-3 py-1.5 rounded-md border border-gray-300 bg-[#FAFAFA] hover:border-[#2563EB] hover:text-[#2563EB] text-xs font-semibold text-[#6B7280] transition-colors"
+                        data-action="allocation#select"
+                        data-allocation-value-param="<%= allocation %>">Compare</button>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <p class="mt-4 text-xs text-[#6B7280]">Bonds are 10-year U.S. Treasuries (the Trinity study used high-grade corporate bonds). Success rate is the share of start years whose money lasted 30 years; median value is the 30-year balance.</p>
+  </div>
+</section>

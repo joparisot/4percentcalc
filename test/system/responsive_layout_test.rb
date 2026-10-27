@@ -59,6 +59,14 @@ class ResponsiveLayoutTest < ActionDispatch::SystemTestCase
       end
     end
 
+    test "homepage does not scroll sideways on #{name} (#{width}px)" do
+      with_viewport(width) do
+        visit root_path
+        assert_selector "#stocks-vs-bonds"
+        assert_operator page.evaluate_script("document.documentElement.scrollWidth"), :<=, width
+      end
+    end
+
     test "withdrawal rate tick labels line up with the slider on #{name} (#{width}px)" do
       with_viewport(width) do
         visit root_path

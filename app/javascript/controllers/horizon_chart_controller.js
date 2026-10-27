@@ -7,8 +7,12 @@ export default class extends Controller {
     data: Object,
     events: { type: Array, default: [] },
     initialAmount: Number,
-    horizon: { type: Number, default: 30 }
+    horizon: { type: Number, default: 30 },
+    comparison: Object,
+    comparisonLabel: String
   }
+
+  static COMPARISON_COLOR = '#2563EB'
 
   // Line colour by final value relative to the starting amount (JON-8).
   static BANDS = [
@@ -98,6 +102,8 @@ export default class extends Controller {
     const valueByYear = new Map(horizonData.map(d => [d.year, d.value]))
     const labels = [...new Set([...allYears, ...valueByYear.keys()])].sort((a, b) => a - b)
     const values = labels.map(year => valueByYear.has(year) ? valueByYear.get(year) : null)
+    const comparisonByYear = new Map((this.comparisonValue[this.horizonValue] || []).map(d => [d.year, d.value]))
+    const comparisonValues = labels.map(year => comparisonByYear.has(year) ? comparisonByYear.get(year) : null)
     const naIndex = values.findIndex((v, i) => v === null && values.slice(i).every(rest => rest === null))
     this.canvasTarget.dataset.naFrom = naIndex === -1 ? "" : labels[naIndex]
     const events = this.eventsValue.filter(e => labels.includes(e.year))
@@ -108,9 +114,11 @@ export default class extends Controller {
     const scale = this.scale
     const log = scale === "logarithmic"
     // Log axes can't show $0, so depleted years sit on the axis floor (the tooltip still says they ran out).
-    const smallest = Math.min(...values.filter(v => v > 0), initialAmount)
+    const smallest = Math.min(...values.filter(v => v > 0), ...comparisonValues.filter(v => v > 0), initialAmount)
     const floor = 10 ** Math.floor(Math.log10(smallest))
-    const plotted = log ? values.map(v => v === null ? null : Math.max(v, floor)) : values
+    const plot = (series) => log ? series.map(v => v === null ? null : Math.max(v, floor)) : series
+    const plotted = plot(values)
+    const seriesValues = [values, null, comparisonValues]
     this.updateScaleControls(scale)
 
     // Create reference line data (same value for all points)
@@ -126,7 +134,7 @@ export default class extends Controller {
         labels: labels,
         datasets: [
           {
-            label: `Portfolio value after ${horizon} years`,
+            label: '100% S&P 500',
             data: plotted,
             borderColor: '#7C3AED',
             segment: {
@@ -151,6 +159,19 @@ export default class extends Controller {
             pointRadius: 0,
             pointHoverRadius: 0,
             fill: false
+          },
+          {
+            label: this.comparisonLabelValue,
+            data: plot(comparisonValues),
+            borderColor: this.constructor.COMPARISON_COLOR,
+            backgroundColor: this.constructor.COMPARISON_COLOR,
+            borderWidth: 2,
+            fill: false,
+            tension: 0.3,
+            cubicInterpolationMode: 'monotone',
+            pointRadius: 0,
+            pointHoverRadius: 5,
+            pointHoverBackgroundColor: this.constructor.COMPARISON_COLOR
           }
         ]
       },
@@ -174,20 +195,21 @@ export default class extends Controller {
             cornerRadius: 8,
             displayColors: false,
             filter: function(tooltipItem) {
-              // Only show tooltip for portfolio value, not reference line
-              return tooltipItem.datasetIndex === 0
+              // Only show tooltip for the portfolios, not the reference line
+              return tooltipItem.datasetIndex !== 1
             },
             callbacks: {
               title: function(context) {
-                return `Started in ${context[0].label}`
+                return `Started in ${context[0].label}, after ${horizon} years`
               },
               footer: (context) => {
                 const event = eventByYear.get(Number(context[0].label))
                 return event ? `Year one: ${event}` : ''
               },
               label: (context) => {
-                const value = values[context.dataIndex]
-                if (value <= 0) return `Ran out of money within ${horizon} years`
+                const value = seriesValues[context.datasetIndex][context.dataIndex]
+                const name = context.dataset.label
+                if (value <= 0) return `${name}: ran out within ${horizon} years`
                 let formatted
                 if (value >= 1000000) {
                   formatted = `$${(value / 1000000).toFixed(1)}M`
@@ -196,7 +218,7 @@ export default class extends Controller {
                 } else {
                   formatted = `$${value}`
                 }
-                return `${formatted} after ${horizon} years`
+                return `${name}: ${formatted}`
               }
             }
           }

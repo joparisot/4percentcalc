@@ -152,4 +152,32 @@ class HorizonChartTest < ActionDispatch::SystemTestCase
     assert_selector "canvas[data-chart-target='canvas'][data-marked-events='2000,2008,2020']", wait: 3
     assert_text "Major market event"
   end
+
+
+  test "chart overlays the chosen Trinity mix and the compare button switches it" do
+    visit root_path
+    assert_selector "canvas[data-horizon-chart-target='canvas'][width]", wait: 3
+    assert_equal ["100% S&P 500", "50/50 stocks/bonds"], chart_dataset_labels.values_at(0, 2)
+
+    within("tr[data-allocation-row='75']") { click_button "Compare" }
+    assert_selector "tr[data-allocation-row='75'][data-selected]"
+    assert_selector "[data-comparison-legend]", text: "75/25 stocks/bonds"
+    assert_selector "canvas[data-horizon-chart-target='canvas'][width]", wait: 3
+    assert_equal ["100% S&P 500", "75/25 stocks/bonds"], chart_dataset_labels.values_at(0, 2)
+    assert_equal "75", find("#stock_allocation_hidden", visible: false).value
+  end
+
+  private
+
+  def chart_dataset_labels
+    page.evaluate_async_script(<<~JS)
+      const done = arguments[0]
+      const poll = () => {
+        const controller = window.Stimulus?.getControllerForElementAndIdentifier(document.querySelector("[data-controller='horizon-chart']"), "horizon-chart")
+        if (controller?.chart) return done(controller.chart.data.datasets.map(d => d.label))
+        setTimeout(poll, 50)
+      }
+      poll()
+    JS
+  end
 end

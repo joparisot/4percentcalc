@@ -220,4 +220,30 @@ class CalculatorControllerTest < ActionDispatch::IntegrationTest
     assert_select "h2", "Fees and Taxes"
     assert_select "#fees-and-taxes li", 3
   end
+
+
+  test "index compares the S&P 500 with every Trinity study mix" do
+    get root_path
+    assert_select "#stocks-vs-bonds tr[data-allocation-row]", 5
+    assert_select "tr[data-allocation-row='50'][data-selected]"
+    assert_select "input#stock_allocation_hidden[value='50']"
+    assert_select "[data-horizon-chart-comparison-label-value='50/50 stocks/bonds']"
+  end
+
+  test "index uses the chosen comparison mix" do
+    get root_path, params: { stock_allocation: 75 }
+    assert_select "tr[data-allocation-row='75'][data-selected]"
+    assert_select "[data-horizon-chart-comparison-label-value='75/25 stocks/bonds']"
+  end
+
+  test "year_detail charts the comparison mix next to the S&P 500" do
+    get year_detail_path(year: 1966), params: { stock_allocation: 25 }
+    assert_response :success
+    assert_select "[data-chart-comparison-label-value='25/75 stocks/bonds']"
+  end
+
+  test "comparison table worst-year links leave the calculator turbo frame" do
+    get root_path
+    assert_select "[data-allocation-row] a[href^='/year_detail'][data-turbo-frame='_top']"
+  end
 end
