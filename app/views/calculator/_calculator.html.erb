@@ -110,12 +110,12 @@
   </div>
 
   <%# Stats Grid %>
-  <div class="lg:col-span-7 lg:self-start grid grid-cols-2 sm:grid-cols-4 gap-4">
+  <div class="lg:col-span-7 lg:self-start grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-4">
     <%# Success Rate %>
-    <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm flex flex-col justify-between hover:border-[#7C3AED]/30 transition-colors">
-      <div class="flex items-start justify-between">
-        <p class="text-sm font-medium text-[#6B7280] leading-tight whitespace-nowrap">Success Rate<br><span class="text-xs opacity-75">(30 Years)</span></p>
-        <div class="p-1 rounded-md bg-emerald-50 text-emerald-500">
+    <div data-stat-card class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm flex flex-col justify-between hover:border-[#7C3AED]/30 transition-colors">
+      <div class="flex items-start justify-between gap-2">
+        <p data-stat-card-label class="min-w-0 text-sm font-medium text-[#6B7280] leading-tight">Success Rate<br><span class="text-xs opacity-75">(30 Years)</span></p>
+        <div data-stat-card-icon class="shrink-0 p-1 rounded-md bg-emerald-50 text-emerald-500">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
@@ -125,10 +125,10 @@
     </div>
 
     <%# Worst Year %>
-    <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm flex flex-col justify-between hover:border-rose-200 transition-colors">
-      <div class="flex items-start justify-between">
-        <p class="text-sm font-medium text-[#6B7280] leading-tight whitespace-nowrap">Worst Start Year</p>
-        <div class="p-1 rounded-md bg-rose-50 text-rose-500">
+    <div data-stat-card class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm flex flex-col justify-between hover:border-rose-200 transition-colors">
+      <div class="flex items-start justify-between gap-2">
+        <p data-stat-card-label class="min-w-0 text-sm font-medium text-[#6B7280] leading-tight">Worst Start Year</p>
+        <div data-stat-card-icon class="shrink-0 p-1 rounded-md bg-rose-50 text-rose-500">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
           </svg>
@@ -138,10 +138,10 @@
     </div>
 
     <%# Best Year %>
-    <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm flex flex-col justify-between hover:border-emerald-200 transition-colors">
-      <div class="flex items-start justify-between">
-        <p class="text-sm font-medium text-[#6B7280] leading-tight whitespace-nowrap">Best Start Year</p>
-        <div class="p-1 rounded-md bg-emerald-50 text-emerald-500">
+    <div data-stat-card class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm flex flex-col justify-between hover:border-emerald-200 transition-colors">
+      <div class="flex items-start justify-between gap-2">
+        <p data-stat-card-label class="min-w-0 text-sm font-medium text-[#6B7280] leading-tight">Best Start Year</p>
+        <div data-stat-card-icon class="shrink-0 p-1 rounded-md bg-emerald-50 text-emerald-500">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
           </svg>
@@ -151,10 +151,10 @@
     </div>
 
     <%# Median Final Value %>
-    <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm flex flex-col justify-between hover:border-[#7C3AED]/30 transition-colors">
-      <div class="flex items-start justify-between">
-        <p class="text-sm font-medium text-[#6B7280] leading-tight whitespace-nowrap">Median Value<br><span class="text-xs opacity-75">(30 Years)</span></p>
-        <div class="p-1 rounded-md bg-[#EDE9FE] text-[#7C3AED]">
+    <div data-stat-card class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm flex flex-col justify-between hover:border-[#7C3AED]/30 transition-colors">
+      <div class="flex items-start justify-between gap-2">
+        <p data-stat-card-label class="min-w-0 text-sm font-medium text-[#6B7280] leading-tight">Median Value<br><span class="text-xs opacity-75">(30 Years)</span></p>
+        <div data-stat-card-icon class="shrink-0 p-1 rounded-md bg-[#EDE9FE] text-[#7C3AED]">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
