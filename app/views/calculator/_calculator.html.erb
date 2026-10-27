@@ -5,8 +5,8 @@
     <h2 class="text-lg font-bold text-[#1F2937]">Portfolio Parameters</h2>
 
     <%= form_with url: calculate_path, method: :post, data: { turbo_frame: "calculator_results", calculator_target: "form" } do |f| %>
+      <%= f.hidden_field :horizon, value: @horizon, id: "horizon_hidden" %>
       <div class="space-y-6">
-        <%= f.hidden_field :horizon, value: @horizon, id: "horizon_hidden" %>
 
         <%# Input Mode Toggle %>
         <fieldset>
@@ -79,21 +79,28 @@
               <span class="text-[#6B7280] font-medium ml-1">%</span>
             </div>
           </div>
+          <% rate_min, rate_max = 1, 12 %>
           <div class="relative w-full">
             <%= f.range_field :withdrawal_rate,
                 value: @withdrawal_rate,
-                min: 1,
-                max: 12,
+                min: rate_min,
+                max: rate_max,
                 step: 0.5,
                 class: "w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#7C3AED]",
                 data: { calculator_target: "rate", action: "input->calculator#updateRate" },
                 aria: { label: "Annual withdrawal rate" } %>
           </div>
-          <div class="flex justify-between text-xs text-[#6B7280] font-medium">
-            <span>1%</span>
-            <span>4%</span>
-            <span>8%</span>
-            <span>12%</span>
+          <%# Middle labels sit under the thumb centre: the 16px thumb travels from 8px to (100% - 8px). %>
+          <div class="relative h-4 text-xs text-[#6B7280] font-medium" data-rate-ticks>
+            <% [rate_min, 4, 8, rate_max].each do |rate| %>
+              <% if rate == rate_min %>
+                <span class="absolute left-0" data-rate-tick="<%= rate %>"><%= rate %>%</span>
+              <% elsif rate == rate_max %>
+                <span class="absolute right-0" data-rate-tick="<%= rate %>"><%= rate %>%</span>
+              <% else %>
+                <span class="absolute -translate-x-1/2" style="left: calc(8px + (100% - 16px) * <%= (rate - rate_min).fdiv(rate_max - rate_min).round(4) %>)" data-rate-tick="<%= rate %>"><%= rate %>%</span>
+              <% end %>
+            <% end %>
           </div>
         </div>
       </div>
@@ -178,14 +185,19 @@
     </div>
     <div class="flex items-center gap-2">
       <label for="horizon-select" class="text-sm font-medium text-[#6B7280]">Time Horizon:</label>
-      <select id="horizon-select"
-              class="px-3 py-2 rounded-lg border border-gray-300 bg-[#FAFAFA] text-[#1F2937] font-medium text-sm focus:ring-2 focus:ring-[#7C3AED]/20 focus:border-[#7C3AED]"
-              data-horizon-chart-target="dropdown"
-              data-action="change->horizon-chart#changeHorizon">
-        <% [10, 20, 30, 40, 50].each do |years| %>
-          <option value="<%= years %>" <%= 'selected' if years == @horizon %>><%= years %> years</option>
-        <% end %>
-      </select>
+      <div class="relative">
+        <select id="horizon-select"
+                class="appearance-none pl-3 pr-9 py-2 rounded-lg border border-gray-300 bg-[#FAFAFA] text-[#1F2937] font-medium text-sm cursor-pointer hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20 focus:border-[#7C3AED]"
+                data-horizon-chart-target="dropdown"
+                data-action="change->horizon-chart#changeHorizon">
+          <% [10, 20, 30, 40, 50].each do |years| %>
+            <option value="<%= years %>" <%= 'selected' if years == @horizon %>><%= years %> years</option>
+          <% end %>
+        </select>
+        <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
+      </div>
     </div>
   </div>
   <div class="p-6">
@@ -202,7 +214,7 @@
       <h2 class="text-xl font-bold text-[#1F2937]">Historical Portfolio Health</h2>
       <p class="text-sm text-[#6B7280] mt-1">Portfolio value at each milestone, adjusted for inflation-indexed withdrawals</p>
     </div>
-    <div class="flex items-center gap-4 text-xs font-medium">
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-medium whitespace-nowrap" data-heatmap-legend>
       <div class="flex items-center gap-2">
         <div class="w-3 h-3 rounded-sm bg-[#10B981]"></div>
         <span class="text-[#6B7280]">&gt;100%</span>

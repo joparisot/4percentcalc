@@ -4,16 +4,14 @@
 <%# Header %>
 <header class="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-gray-200">
   <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center justify-between h-16">
-      <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg bg-[#7C3AED]/10 flex items-center justify-center text-[#7C3AED] text-xl font-bold">
-          4%
-        </div>
-        <%= link_to root_path, class: "text-xl font-bold tracking-tight text-[#1F2937] hover:text-[#7C3AED] transition-colors" do %>
+    <div class="flex items-center justify-between gap-3 h-16">
+      <div class="flex items-center gap-3 min-w-0">
+        <%= render "calculator/logo_mark" %>
+        <%= link_to root_path, class: "hidden sm:inline text-xl font-bold tracking-tight text-[#1F2937] hover:text-[#7C3AED] transition-colors" do %>
           The 4% Rule Calculator
         <% end %>
       </div>
-      <nav class="flex items-center gap-6">
+      <nav class="shrink-0 flex items-center gap-4 sm:gap-6">
         <%= link_to "Calculator", root_path, class: "text-sm font-medium text-[#6B7280] hover:text-[#7C3AED] transition-colors" %>
         <span class="text-sm font-bold text-[#7C3AED]">Methodology</span>
       </nav>
