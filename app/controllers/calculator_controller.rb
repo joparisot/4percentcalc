@@ -25,6 +25,7 @@ class CalculatorController < ApplicationController
     @starting_year = params[:year].to_i
     @initial_amount = params[:initial_amount]&.to_i || 1_000_000
     @withdrawal_rate = params[:withdrawal_rate]&.to_f || 4.0
+    @fee = parse_fee
 
     calculator = Calculator.new
     years = calculator.available_years
@@ -33,11 +34,13 @@ class CalculatorController < ApplicationController
     @detail = calculator.backtest(
       initial_amount: @initial_amount,
       withdrawal_rate: @withdrawal_rate,
-      starting_year: @starting_year
+      starting_year: @starting_year,
+      fee: @fee
     )
     all_results = calculator.backtest_all(
       initial_amount: @initial_amount,
-      withdrawal_rate: @withdrawal_rate
+      withdrawal_rate: @withdrawal_rate,
+      fee: @fee
     )
     stats = calculator.summary_stats(all_results, horizon: 30)
     rank = { stats&.dig(:worst_year) => :worst, stats&.dig(:best_year) => :best }[@starting_year]
@@ -49,7 +52,7 @@ class CalculatorController < ApplicationController
       market_data: calculator.data_by_year,
       rank: rank
     )
-    @scenario_params = request.query_parameters.slice("initial_amount", "withdrawal_rate")
+    @scenario_params = request.query_parameters.slice("initial_amount", "withdrawal_rate", "fee")
     @previous_year = years.select { |y| y < @starting_year }.max
     @next_year = years.select { |y| y > @starting_year }.min
     if @summary.depleted?
@@ -57,7 +60,7 @@ class CalculatorController < ApplicationController
     end
 
     # Build year-by-year data for chart
-    @chart_data = build_chart_data(@starting_year, @initial_amount, @withdrawal_rate)
+    @chart_data = build_chart_data(@starting_year, @initial_amount, @withdrawal_rate, @fee)
 
     respond_to do |format|
       format.html
@@ -65,14 +68,25 @@ class CalculatorController < ApplicationController
   end
 
   def methodology
+    calculator = Calculator.new
+    @fee_example = [0, 1].to_h do |fee|
+      results = calculator.backtest_all(initial_amount: 1_000_000, withdrawal_rate: 4.0, fee: fee)
+      [fee, calculator.summary_stats(results, horizon: 30)[:success_rate]]
+    end
   end
 
   private
+
+  # Annual fee as a % of assets; 0 unless the visitor picks one.
+  def parse_fee
+    params[:fee].to_f.clamp(0.0, 3.0)
+  end
 
   # Spending mode is chosen by the mode toggle, or by an annual_spending param in a shared link.
   def run_scenario
     @withdrawal_rate = params[:withdrawal_rate]&.to_f || 4.0
     @horizon = (params[:horizon]&.to_i || 30)
+    @fee = parse_fee
     @mode = params[:mode].presence_in(%w[portfolio spending]) ||
       (params[:annual_spending].present? ? "spending" : "portfolio")
 
@@ -88,7 +102,8 @@ class CalculatorController < ApplicationController
     @calculator = Calculator.new
     results = @calculator.backtest_all(
       initial_amount: @initial_amount,
-      withdrawal_rate: @withdrawal_rate
+      withdrawal_rate: @withdrawal_rate,
+      fee: @fee
     )
     @results = results.reverse
     @stats = @calculator.summary_stats(results, horizon: 30)
@@ -129,7 +144,7 @@ class CalculatorController < ApplicationController
     end
   end
 
-  def build_chart_data(starting_year, initial_amount, withdrawal_rate)
+  def build_chart_data(starting_year, initial_amount, withdrawal_rate, fee = 0)
     data = JSON.parse(File.read(Rails.root.join('lib/data/shiller_data.json')))
     data_by_year = data.index_by { |d| d["year"] }
 
@@ -148,6 +163,7 @@ class CalculatorController < ApplicationController
       break if portfolio <= 0
 
       portfolio *= (1 + year_data["sp500_return"])
+      portfolio *= (1 - fee.to_f / 100)
       chart_points << { year: year_offset + 1, value: portfolio.round(0) }
 
       annual_withdrawal *= (1 + year_data["inflation"])

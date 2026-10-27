@@ -20,7 +20,7 @@ class Calculator
 
   # Run backtest for a single starting year
   # Returns hash with portfolio values at milestones
-  def backtest(initial_amount:, withdrawal_rate:, starting_year:)
+  def backtest(initial_amount:, withdrawal_rate:, starting_year:, fee: 0)
     portfolio = initial_amount.to_f
     annual_withdrawal = initial_amount.to_f * (withdrawal_rate.to_f / 100)
 
@@ -49,6 +49,8 @@ class Calculator
 
       # Apply market return for this year
       portfolio *= (1 + year_data["sp500_return"])
+      # Annual fee (% of assets), charged on the end-of-year balance
+      portfolio *= (1 - fee.to_f / 100)
 
       # Record milestone if applicable
       if MILESTONES.include?(year_offset + 1)
@@ -65,7 +67,7 @@ class Calculator
   end
 
   # Run backtest for all starting years
-  def backtest_all(initial_amount:, withdrawal_rate:)
+  def backtest_all(initial_amount:, withdrawal_rate:, fee: 0)
     # Only test years where we have at least 10 years of data
     max_start_year = available_years.last - (MILESTONES.min - 1)
 
@@ -73,7 +75,8 @@ class Calculator
       backtest(
         initial_amount: initial_amount,
         withdrawal_rate: withdrawal_rate,
-        starting_year: year
+        starting_year: year,
+        fee: fee
       )
     end
   end

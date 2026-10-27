@@ -106,6 +106,20 @@
   </section>
 
   <%# Assumptions Section %>
+  <section id="fees-and-taxes" class="mb-12">
+    <h2 class="text-2xl font-bold text-[#1F2937] mb-4">Fees and Taxes</h2>
+    <div class="space-y-4 text-[#374151] leading-relaxed">
+      <p><strong>Fees.</strong> Results assume no fees unless you pick an annual fee under Portfolio Parameters. The fee is charged on the portfolio at the end of each year, like a fund's expense ratio or an advisor's fee. It matters more than it looks: with $1M at 4% over 30 years, the historical success rate is <%= @fee_example[0] %>% with no fees and <%= @fee_example[1] %>% with a 1% annual fee.</p>
+      <p><strong>Taxes.</strong> Results are before taxes, because what you owe depends on which account the money comes from:</p>
+      <ul class="list-disc pl-6 space-y-2">
+        <li><strong>Taxable brokerage account:</strong> only the gain is taxed. Selling shares gives you back your cost basis tax-free, and the profit is taxed as a capital gain (0%, 15% or 20% federally for shares held over a year). Dividends are taxed every year, even when reinvested.</li>
+        <li><strong>Traditional 401(k) or IRA:</strong> every dollar withdrawn is taxed as ordinary income.</li>
+        <li><strong>Roth 401(k) or IRA:</strong> qualified withdrawals are tax-free.</li>
+      </ul>
+      <p>The simplest way to account for taxes is to treat the withdrawal as your <em>pre-tax</em> budget. If you need $40,000 a year after tax and expect to pay about 10% in tax, plan to withdraw about $44,400 a year. This is general information, not tax advice.</p>
+    </div>
+  </section>
+
   <section class="mb-12">
     <div class="flex items-center gap-3 mb-6">
       <div class="bg-[#7C3AED]/10 p-2 rounded-lg text-[#7C3AED]">
@@ -138,9 +152,9 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
           <div>
-            <h4 class="font-bold text-[#1F2937] text-sm mb-1">No Taxes or Fees</h4>
+            <h4 class="font-bold text-[#1F2937] text-sm mb-1">Before Taxes, Fees Optional</h4>
             <p class="text-sm text-[#6B7280]">
-              Results are gross of fees and taxes.
+              Results are before taxes. Fees are zero unless you pick an annual fee in the calculator. See <a href="#fees-and-taxes" class="text-[#7C3AED] hover:underline">Fees and Taxes</a>.
             </p>
           </div>
         </div>
