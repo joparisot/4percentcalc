@@ -1,12 +1,15 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["canvas", "dropdown", "title"]
+  static targets = ["canvas", "dropdown", "title", "scaleButton", "scaleNote"]
   static values = {
     data: Object,
     initialAmount: Number,
     horizon: { type: Number, default: 30 }
   }
+
+  static SCALE_KEY = "horizonChartScale"
+  static SCALES = ["linear", "logarithmic"]
 
   async connect() {
     // Dynamically import Chart.js
@@ -36,6 +39,32 @@ export default class extends Controller {
     }
   }
 
+  setScale(event) {
+    const scale = event.currentTarget.dataset.scale
+    if (!this.constructor.SCALES.includes(scale)) return
+
+    try { localStorage.setItem(this.constructor.SCALE_KEY, scale) } catch (e) {}
+    this.renderChart()
+  }
+
+  // An explicit choice wins; otherwise long horizons, where outliers dwarf typical outcomes, default to log.
+  get scale() {
+    let stored = null
+    try { stored = localStorage.getItem(this.constructor.SCALE_KEY) } catch (e) {}
+    if (this.constructor.SCALES.includes(stored)) return stored
+    return this.horizonValue >= 40 ? "logarithmic" : "linear"
+  }
+
+  updateScaleControls(scale) {
+    this.scaleButtonTargets.forEach((button) => {
+      button.setAttribute("aria-pressed", String(button.dataset.scale === scale))
+    })
+    if (this.hasScaleNoteTarget) {
+      this.scaleNoteTarget.classList.toggle("hidden", scale !== "logarithmic")
+    }
+    this.canvasTarget.dataset.renderedScale = scale
+  }
+
   updateTitle() {
     if (this.hasTitleTarget) {
       this.titleTarget.textContent = `Portfolio Value After ${this.horizonValue} Years per Starting Year`
@@ -62,6 +91,13 @@ export default class extends Controller {
     const values = sortedData.map(d => d.value)
     const initialAmount = this.initialAmountValue
     const horizon = this.horizonValue
+    const scale = this.scale
+    const log = scale === "logarithmic"
+    // Log axes can't show $0, so depleted years sit on the axis floor (the tooltip still says they ran out).
+    const smallest = Math.min(...values.filter(v => v > 0), initialAmount)
+    const floor = 10 ** Math.floor(Math.log10(smallest))
+    const plotted = log ? values.map(v => Math.max(v, floor)) : values
+    this.updateScaleControls(scale)
 
     // Create reference line data (same value for all points)
     const referenceLineData = labels.map(() => initialAmount)
@@ -73,11 +109,11 @@ export default class extends Controller {
         datasets: [
           {
             label: `Portfolio value after ${horizon} years`,
-            data: values,
+            data: plotted,
             borderColor: '#7C3AED',
             backgroundColor: 'rgba(124, 58, 237, 0.1)',
             borderWidth: 3,
-            fill: true,
+            fill: 'start',
             tension: 0.3,
             cubicInterpolationMode: 'monotone',
             pointRadius: 0,
@@ -127,8 +163,9 @@ export default class extends Controller {
               title: function(context) {
                 return `Started in ${context[0].label}`
               },
-              label: function(context) {
-                const value = context.raw
+              label: (context) => {
+                const value = values[context.dataIndex]
+                if (value <= 0) return `Ran out of money within ${horizon} years`
                 let formatted
                 if (value >= 1000000) {
                   formatted = `$${(value / 1000000).toFixed(1)}M`
@@ -164,8 +201,8 @@ export default class extends Controller {
             }
           },
           y: {
-            min: 0,
-            grace: '5%',
+            type: scale,
+            ...(log ? { min: floor } : { min: 0, grace: '5%' }),
             grid: {
               color: 'rgba(229, 231, 235, 0.5)'
             },
@@ -174,12 +211,17 @@ export default class extends Controller {
               font: {
                 size: 12
               },
-              callback: (value) => this.formatAxisCurrency(value)
+              callback: (value) => (log && !this.isRoundLogTick(value)) ? '' : this.formatAxisCurrency(value)
             }
           }
         }
       }
     })
+  }
+
+  isRoundLogTick(value) {
+    const mantissa = value / 10 ** Math.floor(Math.log10(value))
+    return Math.abs(mantissa - 1) < 1e-6
   }
 
   formatAxisCurrency(value) {
