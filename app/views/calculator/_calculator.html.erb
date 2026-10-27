@@ -176,6 +176,7 @@
 <section class="w-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mt-8"
          data-controller="horizon-chart"
          data-horizon-chart-data-value="<%= @horizon_chart_data.to_json %>"
+         data-horizon-chart-events-value="<%= MarketEvents.all.to_json %>"
          data-horizon-chart-initial-amount-value="<%= @initial_amount %>"
          data-horizon-chart-horizon-value="<%= @horizon %>">
   <div class="px-6 py-5 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -220,6 +221,7 @@
       <% [["#EF4444", "Below the starting amount"], ["#F59E0B", "1–4× the starting amount"], ["#10B981", "More than 4× the starting amount"]].each do |color, label| %>
         <span class="flex items-center gap-1.5 whitespace-nowrap"><span class="w-4 h-1 rounded-full" style="background-color: <%= color %>"></span><%= label %></span>
       <% end %>
+      <span class="flex items-center gap-1.5 whitespace-nowrap"><span class="h-3 border-l border-dashed border-[#6B7280]"></span>Major market event</span>
       <span class="flex items-center gap-1.5 whitespace-nowrap"><span class="w-4 border-t-2 border-dashed border-[#9CA3AF]"></span>Starting amount (<%= number_to_currency(@initial_amount, precision: 0) %>)</span>
     </div>
     <p class="hidden mt-3 text-xs text-[#6B7280]" data-horizon-chart-target="scaleNote">Log scale: each labelled line is 10× the one below, so big and small outcomes stay readable. Start years that ran out of money sit on the bottom line.</p>
