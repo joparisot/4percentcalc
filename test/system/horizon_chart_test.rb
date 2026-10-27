@@ -119,4 +119,17 @@ class HorizonChartTest < ActionDispatch::SystemTestCase
   ensure
     execute_script("localStorage.clear()")
   end
+
+  test "start years without enough history are marked N/A instead of cutting the axis short" do
+    visit root_path
+    canvas = "canvas[data-horizon-chart-target='canvas']"
+    last_year = Calculator.new.available_years.last
+    assert_selector "#{canvas}[data-na-from='#{last_year - 28}']", wait: 3
+
+    select "50 years", from: "horizon-select"
+    assert_selector "#{canvas}[data-na-from='#{last_year - 48}']"
+
+    select "10 years", from: "horizon-select"
+    assert_selector "#{canvas}[data-na-from='']"
+  end
 end
