@@ -207,6 +207,7 @@ class CalculatorControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_match "Fees:", response.body
     assert_select "a[rel='next'][href*='fee=1']"
+    assert_select "header a[href*='fee=1']", text: /Calculator/
   end
 
   test "no fee by default" do
