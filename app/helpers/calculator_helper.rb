@@ -142,7 +142,7 @@ module CalculatorHelper
         {
           "@type" => "Question",
           "name" => item[:question],
-          "acceptedAnswer" => { "@type" => "Answer", "text" => strip_tags(item[:answer]) }
+          "acceptedAnswer" => { "@type" => "Answer", "text" => CGI.unescapeHTML(strip_tags(item[:answer])) }
         }
       end
     }

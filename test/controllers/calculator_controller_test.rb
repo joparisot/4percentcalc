@@ -172,6 +172,7 @@ class CalculatorControllerTest < ActionDispatch::IntegrationTest
       assert_equal "Answer", q.dig("acceptedAnswer", "@type")
       assert q.dig("acceptedAnswer", "text").present?
       refute_match(/<[a-z]/, q.dig("acceptedAnswer", "text"))
+      refute_match(/&[a-z]+;/, q.dig("acceptedAnswer", "text"))
     end
   end
 
