@@ -37,6 +37,7 @@ export default class extends Controller {
           borderWidth: 3,
           fill: true,
           tension: 0.3,
+          cubicInterpolationMode: 'monotone',
           pointRadius: 0,
           pointHoverRadius: 6,
           pointHoverBackgroundColor: '#7C3AED'
