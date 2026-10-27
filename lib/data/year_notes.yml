@@ -1,0 +1,92 @@
+# Historical context for notable retirement start years, shown on /year_detail/:year.
+#   label:    short name used for links (e.g. the homepage "Notable years" block)
+#   context:  one sentence about what was happening in markets that year
+#   featured: true to list the year in the homepage "Notable years" block
+1927:
+  label: Roaring Twenties
+  context: Retiring in 1927 meant riding the Roaring Twenties boom straight into the 1929 crash and the Great Depression.
+1929:
+  label: The Great Crash
+  context: 1929 is the year of the Great Crash, when stocks peaked in September, crashed in October, and went on to lose more than 80% of their value by mid-1932.
+  featured: true
+1930:
+  label: Great Depression
+  context: A 1930 retiree started just after the crash and then lived through the deepest part of the Great Depression, as stocks kept falling until mid-1932.
+  featured: true
+1931:
+  label: Bank panics
+  context: 1931 brought bank failures across the U.S. and Europe and Britain's exit from the gold standard as the Depression deepened.
+1932:
+  label: Depression bottom
+  context: Stocks hit their Great Depression low in the summer of 1932, so a 1932 retiree started near one of the best entry points of the century.
+1937:
+  label: 1937 recession
+  context: The 1937-38 recession, triggered partly by tighter fiscal and monetary policy, cut stock prices about in half from their early-1937 peak.
+1942:
+  label: World War II
+  context: A 1942 retiree started in the middle of World War II, near the market low of April 1942, and then rode the long postwar boom.
+1946:
+  label: Postwar inflation
+  context: 1946 brought a burst of postwar inflation and a sharp stock decline as wartime price controls were lifted.
+1949:
+  label: Postwar boom
+  context: A 1949 retiree began at the start of the great postwar bull market, which ran with few interruptions until the mid-1960s.
+1966:
+  label: Stagflation
+  context: 1966 began a 16-year stretch in which stocks went nowhere while inflation climbed into double digits, which is why it is the classic stress test for the 4% rule.
+  featured: true
+1968:
+  label: Go-go years peak
+  context: A 1968 retiree started near a market peak, then faced the 1973-74 bear market and the high inflation of the 1970s.
+1969:
+  label: 1969 recession
+  context: 1969 began with stocks near their highs and inflation rising, and a recession followed in 1969-70.
+1970:
+  label: Inflation rising
+  context: A 1970 retiree began in a recession, with inflation already above 5% and the worst of the 1970s still ahead.
+1973:
+  label: Oil crisis
+  context: The 1973 oil embargo and the 1973-74 bear market cut the S&P 500 nearly in half, while inflation pushed withdrawals up fast.
+  featured: true
+1974:
+  label: 1974 bear market
+  context: A 1974 retiree started in the middle of the 1973-74 bear market and faced double-digit inflation within the year.
+1976:
+  label: Post-crash rebound
+  context: A 1976 retiree started after the 1973-74 crash, with stocks cheap, and went on to ride the long bull market that began in 1982.
+  featured: true
+1982:
+  label: Volcker bull market
+  context: August 1982 marked the start of an 18-year bull market, as Paul Volcker's Fed brought inflation down from double digits.
+1987:
+  label: Black Monday
+  context: On October 19, 1987, known as Black Monday, the S&P 500 fell 20.5% in a single day, its largest one-day percentage drop on record.
+1995:
+  label: Dot-com boom
+  context: A 1995 retiree started at the beginning of the dot-com boom, when the S&P 500 more than tripled in five years.
+1999:
+  label: Bubble top
+  context: A 1999 retiree started near the top of the dot-com bubble, about a year before the S&P 500 began a 49% fall.
+2000:
+  label: Dot-com crash
+  context: 2000 retirees started at the peak of the dot-com bubble and then sat through two bear markets, a 49% drop by 2002 and a 57% drop in 2007-09.
+  featured: true
+2001:
+  label: 9/11 and recession
+  context: A 2001 retiree faced the dot-com bust, the 9/11 attacks, and a recession in the first year alone.
+2007:
+  label: Pre-crisis peak
+  context: A 2007 retiree started in the year the market peaked, just before the global financial crisis.
+2008:
+  label: Financial crisis
+  context: 2008 brought the global financial crisis, as Lehman Brothers collapsed in September and the S&P 500 fell 57% from its 2007 peak to its March 2009 low.
+  featured: true
+2009:
+  label: Crisis bottom
+  context: Stocks bottomed in March 2009, so a 2009 retiree began near the start of the longest bull market in U.S. history.
+2020:
+  label: COVID crash
+  context: 2020 brought the COVID-19 crash, the fastest 30% fall in S&P 500 history, followed by an almost equally fast recovery.
+2022:
+  label: Inflation shock
+  context: In 2022 inflation hit a 40-year high and the Fed raised rates rapidly, pushing stocks and bonds down together.

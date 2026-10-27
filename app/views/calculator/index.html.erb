@@ -36,6 +36,21 @@
     </p>
   </section>
 
+  <%# Notable Years %>
+  <nav aria-labelledby="notable-years-heading" class="max-w-4xl -mt-4 pb-6">
+    <h2 id="notable-years-heading" class="text-sm font-semibold uppercase tracking-wider text-[#6B7280] mb-3">Notable years</h2>
+    <ul class="flex flex-wrap gap-2">
+      <% @notable_years.each do |year, note| %>
+        <li>
+          <%= link_to year_detail_path(year), class: "inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-200 bg-white hover:border-[#7C3AED]/40 hover:bg-[#EDE9FE] text-sm transition-colors" do %>
+            <span class="font-bold text-[#1F2937]"><%= year %></span>
+            <span class="text-[#6B7280]"><%= note["label"] %></span>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  </nav>
+
   <%= turbo_frame_tag "calculator_results" do %>
     <%# Controls Section %>
     <section class="grid grid-cols-1 lg:grid-cols-12 gap-6" data-controller="calculator">
@@ -190,7 +205,7 @@
     </section>
 
     <%# Heatmap Table %>
-    <section class="w-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mt-8">
+    <section id="start-years" class="w-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mt-8">
       <div class="px-6 py-5 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 class="text-xl font-bold text-[#1F2937]">Historical Portfolio Health</h2>
