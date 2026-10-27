@@ -8,6 +8,13 @@ export default class extends Controller {
     horizon: { type: Number, default: 30 }
   }
 
+  // Line colour by final value relative to the starting amount (JON-8).
+  static BANDS = [
+    { below: 1, color: '#EF4444' },
+    { below: 4, color: '#F59E0B' },
+    { below: Infinity, color: '#10B981' }
+  ]
+
   static SCALE_KEY = "horizonChartScale"
   static SCALES = ["linear", "logarithmic"]
 
@@ -114,14 +121,18 @@ export default class extends Controller {
             label: `Portfolio value after ${horizon} years`,
             data: plotted,
             borderColor: '#7C3AED',
-            backgroundColor: 'rgba(124, 58, 237, 0.1)',
+            segment: {
+              // A segment touching a weak year takes that year's colour, so drops into depletion read as red.
+              borderColor: (ctx) => this.bandColor(Math.min(values[ctx.p0DataIndex], values[ctx.p1DataIndex]), initialAmount)
+            },
+            backgroundColor: 'rgba(107, 114, 128, 0.08)',
             borderWidth: 3,
             fill: 'start',
             tension: 0.3,
             cubicInterpolationMode: 'monotone',
             pointRadius: 0,
             pointHoverRadius: 6,
-            pointHoverBackgroundColor: '#7C3AED'
+            pointHoverBackgroundColor: (ctx) => this.bandColor(values[ctx.dataIndex], initialAmount)
           },
           {
             label: `Initial Amount (${this.formatCurrency(initialAmount)})`,
@@ -143,13 +154,9 @@ export default class extends Controller {
           mode: 'index'
         },
         plugins: {
+          // The HTML legend below the chart explains the line colours and the dashed line.
           legend: {
-            display: true,
-            position: 'bottom',
-            labels: {
-              usePointStyle: true,
-              padding: 20
-            }
+            display: false
           },
           tooltip: {
             backgroundColor: '#1F2937',
@@ -220,6 +227,11 @@ export default class extends Controller {
         }
       }
     })
+  }
+
+  bandColor(value, initialAmount) {
+    const ratio = value / initialAmount
+    return this.constructor.BANDS.find(band => ratio < band.below).color
   }
 
   naZonePlugin(naIndex) {
