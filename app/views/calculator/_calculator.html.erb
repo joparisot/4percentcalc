@@ -183,7 +183,18 @@
       <h2 class="text-xl font-bold text-[#1F2937]" data-horizon-chart-target="title">Portfolio Value After <%= @horizon %> Years per Starting Year</h2>
       <p class="text-sm text-[#6B7280] mt-1">Final portfolio value for each historical starting year</p>
     </div>
-    <div class="flex items-center gap-2">
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+      <div class="inline-flex rounded-lg border border-gray-300 bg-[#FAFAFA] p-0.5 text-sm font-medium" role="group" aria-label="Y-axis scale">
+        <% [["linear", "Linear"], ["logarithmic", "Log"]].each do |scale, label| %>
+          <button type="button"
+                  class="px-3 py-1.5 rounded-md text-[#6B7280] hover:text-[#1F2937] aria-pressed:bg-white aria-pressed:text-[#7C3AED] aria-pressed:shadow-sm transition-colors"
+                  aria-pressed="false"
+                  data-scale="<%= scale %>"
+                  data-horizon-chart-target="scaleButton"
+                  data-action="horizon-chart#setScale"><%= label %></button>
+        <% end %>
+      </div>
+      <div class="flex items-center gap-2">
       <label for="horizon-select" class="text-sm font-medium text-[#6B7280]">Time Horizon:</label>
       <div class="relative">
         <select id="horizon-select"
@@ -198,12 +209,14 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
         </svg>
       </div>
+      </div>
     </div>
   </div>
   <div class="p-6">
     <div class="h-80">
       <canvas data-horizon-chart-target="canvas"></canvas>
     </div>
+    <p class="hidden mt-3 text-xs text-[#6B7280]" data-horizon-chart-target="scaleNote">Log scale: each labelled line is 10× the one below, so big and small outcomes stay readable. Start years that ran out of money sit on the bottom line.</p>
   </div>
 </section>
 
