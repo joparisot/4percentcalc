@@ -37,7 +37,7 @@ export default class extends Controller {
     const comparisonValues = comparison.map(d => d.value)
     // Point k is the balance after k years, so an event in calendar year Y sits between points Y - start and Y - start + 1.
     const start = this.startingYearValue
-    const events = this.eventsValue.filter(e => e.year >= start && e.year - start < data.length - 1)
+    const events = this.eventsValue.filter(e => e.year >= start && e.year - start < length - 1)
     const eventByYear = new Map(events.map(e => [e.year, e.label]))
     this.canvasTarget.dataset.markedEvents = events.map(e => e.year).join(",")
 
@@ -92,7 +92,7 @@ export default class extends Controller {
             displayColors: false,
             callbacks: {
               footer: (context) => {
-                const event = eventByYear.get(start + data[context[0].dataIndex].year - 1)
+                const event = eventByYear.get(start + context[0].dataIndex - 1)
                 return event ? `During this year: ${event}` : ''
               },
               label: function(context) {
