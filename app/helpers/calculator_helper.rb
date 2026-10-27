@@ -112,7 +112,9 @@ module CalculatorHelper
       {
         question: "Does this include bonds, fees, or Social Security?",
         answer: [
-          "No. The backtest assumes the whole portfolio is in the S&P 500 with dividends reinvested, and it ignores bonds, fees, taxes, and income such as Social Security or a pension. ",
+          "The main backtest assumes the whole portfolio is in the S&P 500 with dividends reinvested. ",
+          "Next to it, the calculator shows the Trinity study's stock/bond mixes (75/25, 50/50, 25/75 and all bonds), using 10-year U.S. Treasuries rebalanced every year. ",
+          "It ignores fees, taxes, and income such as Social Security or a pension. ",
           "Fees and taxes would make results worse, while Social Security lowers how much your portfolio has to cover, so you can subtract expected benefits from your spending before using the calculator. ",
           "See the ",
           link_to("methodology", methodology_path, class: link_class),

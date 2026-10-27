@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = ["canvas"]
-  static values = { data: Array }
+  static values = { data: Array, comparison: Array, comparisonLabel: String }
 
   async connect() {
     // Dynamically import Chart.js
@@ -22,15 +22,19 @@ export default class extends Controller {
     const ctx = this.canvasTarget.getContext('2d')
     const data = this.dataValue
 
-    const labels = data.map(d => `Year ${d.year}`)
+    const comparison = this.comparisonValue
+    // Either portfolio may run out first, so the x-axis spans the longer of the two.
+    const length = Math.max(data.length, comparison.length)
+    const labels = Array.from({ length }, (_, i) => `Year ${i}`)
     const values = data.map(d => d.value)
+    const comparisonValues = comparison.map(d => d.value)
 
     this.chart = new this.Chart(ctx, {
       type: 'line',
       data: {
         labels: labels,
         datasets: [{
-          label: 'Portfolio Value',
+          label: '100% S&P 500',
           data: values,
           borderColor: '#7C3AED',
           backgroundColor: 'rgba(124, 58, 237, 0.1)',
@@ -41,6 +45,18 @@ export default class extends Controller {
           pointRadius: 0,
           pointHoverRadius: 6,
           pointHoverBackgroundColor: '#7C3AED'
+        }, {
+          label: this.comparisonLabelValue,
+          data: comparisonValues,
+          borderColor: '#2563EB',
+          backgroundColor: '#2563EB',
+          borderWidth: 2,
+          fill: false,
+          tension: 0.3,
+          cubicInterpolationMode: 'monotone',
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          pointHoverBackgroundColor: '#2563EB'
         }]
       },
       options: {
@@ -63,13 +79,15 @@ export default class extends Controller {
             displayColors: false,
             callbacks: {
               label: function(context) {
+                const name = context.dataset.label
                 const value = context.raw
+                if (value <= 0) return `${name}: ran out`
                 if (value >= 1000000) {
-                  return `$${(value / 1000000).toFixed(1)}M`
+                  return `${name}: $${(value / 1000000).toFixed(1)}M`
                 } else if (value >= 1000) {
-                  return `$${Math.round(value / 1000)}K`
+                  return `${name}: $${Math.round(value / 1000)}K`
                 }
-                return `$${value}`
+                return `${name}: $${value}`
               }
             }
           }

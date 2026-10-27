@@ -121,6 +121,8 @@ export default class extends Controller {
     if (this.hasRateTarget) params.set('withdrawal_rate', parseFloat(this.rateTarget.value).toFixed(1))
     const horizon = document.getElementById('horizon_hidden')
     if (horizon && horizon.value) params.set('horizon', horizon.value)
+    const allocation = document.getElementById('stock_allocation_hidden')
+    if (allocation && allocation.value && allocation.value !== '50') params.set('stock_allocation', allocation.value)
 
     return `${window.location.origin}${window.location.pathname}?${params.toString()}`
   }

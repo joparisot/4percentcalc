@@ -1,5 +1,21 @@
 class Calculator
   MILESTONES = [10, 20, 30, 40, 50].freeze
+  # Stock/bond splits from the Trinity study, as the percentage held in stocks.
+  TRINITY_ALLOCATIONS = [100, 75, 50, 25, 0].freeze
+  DEFAULT_COMPARISON_ALLOCATION = 50
+
+  # Clamps a stock_allocation param to one of the Trinity study's mixes.
+  def self.comparison_allocation(value)
+    allocation = value.presence&.to_i
+    (TRINITY_ALLOCATIONS - [100]).include?(allocation) ? allocation : DEFAULT_COMPARISON_ALLOCATION
+  end
+
+  def self.allocation_label(stock_allocation)
+    return "100% S&P 500" if stock_allocation == 100
+    return "100% bonds" if stock_allocation == 0
+
+    "#{stock_allocation}/#{100 - stock_allocation} stocks/bonds"
+  end
 
   attr_reader :data_by_year
 
@@ -20,11 +36,12 @@ class Calculator
 
   # Run backtest for a single starting year
   # Returns hash with portfolio values at milestones
-  def backtest(initial_amount:, withdrawal_rate:, starting_year:)
+  # stock_allocation is the % in the S&P 500; the rest is in 10-year Treasuries, rebalanced every year.
+  def backtest(initial_amount:, withdrawal_rate:, starting_year:, stock_allocation: 100)
     portfolio = initial_amount.to_f
     annual_withdrawal = initial_amount.to_f * (withdrawal_rate.to_f / 100)
 
-    results = { starting_year: starting_year, milestones: {} }
+    results = { starting_year: starting_year, stock_allocation: stock_allocation, milestones: {} }
     depleted_at = nil
 
     (0...50).each do |year_offset|
@@ -48,7 +65,7 @@ class Calculator
       end
 
       # Apply market return for this year
-      portfolio *= (1 + year_data["sp500_return"])
+      portfolio *= (1 + annual_return(year_data, stock_allocation))
 
       # Record milestone if applicable
       if MILESTONES.include?(year_offset + 1)
@@ -65,7 +82,7 @@ class Calculator
   end
 
   # Run backtest for all starting years
-  def backtest_all(initial_amount:, withdrawal_rate:)
+  def backtest_all(initial_amount:, withdrawal_rate:, stock_allocation: 100)
     # Only test years where we have at least 10 years of data
     max_start_year = available_years.last - (MILESTONES.min - 1)
 
@@ -73,7 +90,8 @@ class Calculator
       backtest(
         initial_amount: initial_amount,
         withdrawal_rate: withdrawal_rate,
-        starting_year: year
+        starting_year: year,
+        stock_allocation: stock_allocation
       )
     end
   end
@@ -95,6 +113,11 @@ class Calculator
       best_year: completed_results.max_by { |r| r[:milestones][horizon] || 0 }&.dig(:starting_year),
       median_final_value: final_values[final_values.length / 2]
     }
+  end
+
+  def annual_return(year_data, stock_allocation)
+    stocks = stock_allocation / 100.0
+    stocks * year_data["sp500_return"] + (1 - stocks) * year_data["bond_return"]
   end
 
   private

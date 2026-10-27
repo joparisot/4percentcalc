@@ -6,6 +6,7 @@
 
     <%= form_with url: calculate_path, method: :post, data: { turbo_frame: "calculator_results", calculator_target: "form" } do |f| %>
       <%= f.hidden_field :horizon, value: @horizon, id: "horizon_hidden" %>
+      <%= f.hidden_field :stock_allocation, value: @comparison_allocation, id: "stock_allocation_hidden" %>
       <div class="space-y-6">
 
         <%# Input Mode Toggle %>
@@ -172,16 +173,20 @@
   </div>
 </section>
 
+<%= render "calculator/allocation_comparison" %>
+
 <%# Time Horizon Chart %>
 <section class="w-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mt-8"
          data-controller="horizon-chart"
          data-horizon-chart-data-value="<%= @horizon_chart_data.to_json %>"
          data-horizon-chart-initial-amount-value="<%= @initial_amount %>"
-         data-horizon-chart-horizon-value="<%= @horizon %>">
+         data-horizon-chart-horizon-value="<%= @horizon %>"
+         data-horizon-chart-comparison-value="<%= @comparison_horizon_chart_data.to_json %>"
+         data-horizon-chart-comparison-label-value="<%= Calculator.allocation_label(@comparison_allocation) %>">
   <div class="px-6 py-5 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
       <h2 class="text-xl font-bold text-[#1F2937]" data-horizon-chart-target="title">Portfolio Value After <%= @horizon %> Years per Starting Year</h2>
-      <p class="text-sm text-[#6B7280] mt-1">Final portfolio value for each historical starting year</p>
+      <p class="text-sm text-[#6B7280] mt-1">Final portfolio value for each historical starting year: 100% S&amp;P 500 vs. <%= Calculator.allocation_label(@comparison_allocation) %></p>
     </div>
     <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
       <div class="inline-flex rounded-lg border border-gray-300 bg-[#FAFAFA] p-0.5 text-sm font-medium" role="group" aria-label="Y-axis scale">
@@ -217,9 +222,11 @@
       <canvas data-horizon-chart-target="canvas"></canvas>
     </div>
     <div class="mt-4 flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs font-medium text-[#6B7280]" data-horizon-legend>
+      <span class="font-semibold text-[#1F2937] whitespace-nowrap">100% S&amp;P 500 line:</span>
       <% [["#EF4444", "Below the starting amount"], ["#F59E0B", "1–4× the starting amount"], ["#10B981", "More than 4× the starting amount"]].each do |color, label| %>
         <span class="flex items-center gap-1.5 whitespace-nowrap"><span class="w-4 h-1 rounded-full" style="background-color: <%= color %>"></span><%= label %></span>
       <% end %>
+      <span class="flex items-center gap-1.5 whitespace-nowrap" data-comparison-legend><span class="w-4 h-0.5 rounded-full bg-[#2563EB]"></span><%= Calculator.allocation_label(@comparison_allocation) %> (Trinity study mix)</span>
       <span class="flex items-center gap-1.5 whitespace-nowrap"><span class="w-4 border-t-2 border-dashed border-[#9CA3AF]"></span>Starting amount (<%= number_to_currency(@initial_amount, precision: 0) %>)</span>
     </div>
     <p class="hidden mt-3 text-xs text-[#6B7280]" data-horizon-chart-target="scaleNote">Log scale: each labelled line is 10× the one below, so big and small outcomes stay readable. Start years that ran out of money sit on the bottom line.</p>
@@ -231,7 +238,7 @@
   <div class="px-6 py-5 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
       <h2 class="text-xl font-bold text-[#1F2937]">Historical Portfolio Health</h2>
-      <p class="text-sm text-[#6B7280] mt-1">Portfolio value at each milestone, adjusted for inflation-indexed withdrawals</p>
+      <p class="text-sm text-[#6B7280] mt-1">100% S&amp;P 500 portfolio value at each milestone, adjusted for inflation-indexed withdrawals</p>
     </div>
     <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-medium whitespace-nowrap" data-heatmap-legend>
       <div class="flex items-center gap-2">
@@ -272,7 +279,7 @@
       </thead>
       <tbody>
         <% @results.each do |result| %>
-          <% detail_url = year_detail_path(result[:starting_year], initial_amount: @initial_amount, withdrawal_rate: @withdrawal_rate) %>
+          <% detail_url = year_detail_path(result[:starting_year], initial_amount: @initial_amount, withdrawal_rate: @withdrawal_rate, stock_allocation: (@comparison_allocation unless @comparison_allocation == Calculator::DEFAULT_COMPARISON_ALLOCATION)) %>
           <tr class="group border-b border-dashed border-gray-200 last:border-0 hover:bg-[#EDE9FE] cursor-pointer transition-colors"
               onclick="window.location='<%= detail_url %>'">
             <td class="py-3 px-2 font-semibold">

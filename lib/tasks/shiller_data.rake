@@ -13,8 +13,11 @@ namespace :shiller do
     # Col 3: Dividend
     # Col 4: Earnings
     # Col 5: CPI
+    # Col 18: Monthly total bond return factor (10-year Treasury, GS10), month t to t+1
 
     annual_data = {}
+    bond_factors = Hash.new(1.0)
+    bond_months = Hash.new(0)
 
     # Iterate through rows (data starts at row 9)
     (9..sheet.last_row).each do |row_num|
@@ -25,6 +28,13 @@ namespace :shiller do
       month = ((date_val - year) * 100).round
 
       next if year < 1926 # Start from 1926
+
+      bond_factor = sheet.cell(row_num, 18)
+      if bond_factor.is_a?(Numeric)
+        bond_factors[year] *= bond_factor
+        bond_months[year] += 1
+      end
+
       next unless month == 1 # Only January data for annual snapshots
 
       price = sheet.cell(row_num, 2)&.to_f
@@ -62,10 +72,14 @@ namespace :shiller do
       # Inflation = (cpi_end - cpi_start) / cpi_start
       inflation = (current[:cpi] - previous[:cpi]) / previous[:cpi]
 
+      # Compounding Jan..Dec of prev_year's monthly bond factors gives Jan prev_year to Jan year.
+      raise "Missing bond returns for #{prev_year}" unless bond_months[prev_year] == 12
+
       # Label each return by the year it covers: Jan prev_year to Jan year.
       result << {
         year: prev_year,
         sp500_return: total_return.round(4),
+        bond_return: (bond_factors[prev_year] - 1).round(4),
         inflation: inflation.round(4)
       }
     end
