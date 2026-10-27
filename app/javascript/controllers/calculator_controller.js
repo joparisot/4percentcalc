@@ -121,6 +121,8 @@ export default class extends Controller {
     if (this.hasRateTarget) params.set('withdrawal_rate', parseFloat(this.rateTarget.value).toFixed(1))
     const horizon = document.getElementById('horizon_hidden')
     if (horizon && horizon.value) params.set('horizon', horizon.value)
+    const fee = this.hasFormTarget && this.formTarget.elements['fee']
+    if (fee && parseFloat(fee.value) > 0) params.set('fee', fee.value)
 
     return `${window.location.origin}${window.location.pathname}?${params.toString()}`
   }

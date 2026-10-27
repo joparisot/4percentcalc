@@ -126,4 +126,18 @@ class CalculatorTest < ActiveSupport::TestCase
     assert_equal 3, stats[:worst_year], "earliest depletion breaks ties between depleted years"
     assert_equal 4, stats[:best_year]
   end
+
+  test "an annual fee is charged on the balance after each year's return" do
+    base = @calculator.backtest(initial_amount: 1_000_000, withdrawal_rate: 4, starting_year: 1990)
+    assert_equal base, @calculator.backtest(initial_amount: 1_000_000, withdrawal_rate: 4, starting_year: 1990, fee: 0)
+
+    no_withdrawals = @calculator.backtest(initial_amount: 1_000_000, withdrawal_rate: 0, starting_year: 1990)
+    with_fee = @calculator.backtest(initial_amount: 1_000_000, withdrawal_rate: 0, starting_year: 1990, fee: 1)
+    assert_in_delta 0.99**10, with_fee[:milestones][10].fdiv(no_withdrawals[:milestones][10]), 1e-5
+  end
+
+  test "fees lower the success rate" do
+    rate = ->(fee) { @calculator.summary_stats(@calculator.backtest_all(initial_amount: 1_000_000, withdrawal_rate: 4, fee: fee), horizon: 30)[:success_rate] }
+    assert_operator rate.call(1), :<, rate.call(0)
+  end
 end

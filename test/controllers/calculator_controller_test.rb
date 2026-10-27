@@ -195,4 +195,28 @@ class CalculatorControllerTest < ActionDispatch::IntegrationTest
     get root_path
     assert_select "main p", /See how much you need to retire, and whether it would have lasted in every market since 1926/
   end
+
+  test "a fee carries through the calculator, year pages and their links" do
+    post calculate_path, params: { initial_amount: 1_000_000, withdrawal_rate: 4.0, fee: 1 },
+      headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    assert_response :success
+    assert_match "fee=1", response.body
+    assert_select "select#fee-select option[selected][value='1']"
+
+    get year_detail_path(1990), params: { initial_amount: 1_000_000, withdrawal_rate: 4.0, fee: 1 }
+    assert_response :success
+    assert_match "Fees:", response.body
+    assert_select "a[rel='next'][href*='fee=1']"
+  end
+
+  test "no fee by default" do
+    get year_detail_path(1990)
+    assert_no_match "Fees:", response.body
+  end
+
+  test "methodology explains fees and taxes" do
+    get methodology_path
+    assert_select "h2", "Fees and Taxes"
+    assert_select "#fees-and-taxes li", 3
+  end
 end

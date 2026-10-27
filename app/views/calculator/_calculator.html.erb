@@ -103,6 +103,17 @@
             <% end %>
           </div>
         </div>
+
+        <%# Annual Fee %>
+        <div class="flex items-center justify-between gap-4">
+          <label for="fee-select" class="text-sm font-medium text-[#6B7280]">Annual Fees <span class="block text-xs opacity-75">Fund expense ratio + advisor fee</span></label>
+          <div class="relative shrink-0">
+            <%= f.select :fee, fee_options(@fee), {}, id: "fee-select", class: "appearance-none pl-3 pr-9 py-2 rounded-lg border border-gray-300 bg-[#FAFAFA] text-[#1F2937] font-medium text-sm cursor-pointer hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20 focus:border-[#7C3AED]", data: { action: "change->calculator#submit" } %>
+            <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </div>
+        </div>
       </div>
     <% end %>
 
@@ -274,7 +285,7 @@
       </thead>
       <tbody>
         <% @results.each do |result| %>
-          <% detail_url = year_detail_path(result[:starting_year], initial_amount: @initial_amount, withdrawal_rate: @withdrawal_rate) %>
+          <% detail_url = year_detail_path(result[:starting_year], year_detail_scenario_params(initial_amount: @initial_amount, withdrawal_rate: @withdrawal_rate, fee: @fee)) %>
           <tr class="group border-b border-dashed border-gray-200 last:border-0 hover:bg-[#EDE9FE] cursor-pointer transition-colors"
               onclick="window.location='<%= detail_url %>'">
             <td class="py-3 px-2 font-semibold">
