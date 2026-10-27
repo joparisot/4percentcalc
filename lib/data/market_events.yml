@@ -1,0 +1,14 @@
+# Major market events marked on the charts. `year` is the data year the event falls in
+# (data year Y covers Jan Y to Jan Y+1), so the marker lines up with the drop it caused.
+- year: 1929
+  label: Great Crash
+- year: 1973
+  label: Oil shock
+- year: 1987
+  label: Black Monday
+- year: 2000
+  label: Dot-com bust
+- year: 2008
+  label: Financial crisis
+- year: 2020
+  label: COVID crash
