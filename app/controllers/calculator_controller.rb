@@ -1,18 +1,11 @@
 class CalculatorController < ApplicationController
-  def index
-    @initial_amount = params[:initial_amount]&.to_i || 1_000_000
-    @withdrawal_rate = params[:withdrawal_rate]&.to_f || 4.0
-    @horizon = (params[:horizon]&.to_i || 30)
+  FAQ_RATES = [3.0, 3.5, 4.0].freeze
+  FAQ_EXAMPLE_SPENDING = 80_000
 
-    calculator = Calculator.new
-    results = calculator.backtest_all(
-      initial_amount: @initial_amount,
-      withdrawal_rate: @withdrawal_rate
-    )
-    @results = results.reverse
-    @stats = calculator.summary_stats(results, horizon: 30)
-    @horizon_chart_data = build_horizon_chart_data(@results)
+  def index
+    run_scenario
     @notable_years = YearSummary.notes.slice(*YearSummary.featured_years)
+    @faq = build_faq_data(@calculator)
 
     respond_to do |format|
       format.html
@@ -21,18 +14,7 @@ class CalculatorController < ApplicationController
   end
 
   def calculate
-    @initial_amount = params[:initial_amount]&.to_i || 1_000_000
-    @withdrawal_rate = params[:withdrawal_rate]&.to_f || 4.0
-    @horizon = (params[:horizon]&.to_i || 30)
-
-    calculator = Calculator.new
-    results = calculator.backtest_all(
-      initial_amount: @initial_amount,
-      withdrawal_rate: @withdrawal_rate
-    )
-    @results = results.reverse
-    @stats = calculator.summary_stats(results, horizon: 30)
-    @horizon_chart_data = build_horizon_chart_data(@results)
+    run_scenario
 
     respond_to do |format|
       format.turbo_stream
@@ -86,6 +68,54 @@ class CalculatorController < ApplicationController
   end
 
   private
+
+  # Spending mode is chosen by the mode toggle, or by an annual_spending param in a shared link.
+  def run_scenario
+    @withdrawal_rate = params[:withdrawal_rate]&.to_f || 4.0
+    @horizon = (params[:horizon]&.to_i || 30)
+    @mode = params[:mode].presence_in(%w[portfolio spending]) ||
+      (params[:annual_spending].present? ? "spending" : "portfolio")
+
+    if @mode == "spending"
+      @withdrawal_rate = @withdrawal_rate.clamp(1.0, 12.0)
+      @annual_spending = params[:annual_spending]&.to_i || 40_000
+      @initial_amount = Calculator.required_portfolio(annual_spending: @annual_spending, withdrawal_rate: @withdrawal_rate)
+    else
+      @initial_amount = params[:initial_amount]&.to_i || 1_000_000
+      @annual_spending = (@initial_amount * @withdrawal_rate / 100).round
+    end
+
+    @calculator = Calculator.new
+    results = @calculator.backtest_all(
+      initial_amount: @initial_amount,
+      withdrawal_rate: @withdrawal_rate
+    )
+    @results = results.reverse
+    @stats = @calculator.summary_stats(results, horizon: 30)
+    @horizon_chart_data = build_horizon_chart_data(@results)
+  end
+
+  # Figures quoted in the homepage FAQ, always for a $1M portfolio regardless of the
+  # visitor's scenario so the page copy and FAQPage JSON-LD stay stable.
+  def build_faq_data(calculator)
+    by_rate = FAQ_RATES.index_with do |rate|
+      results = calculator.backtest_all(initial_amount: 1_000_000, withdrawal_rate: rate)
+      stats = calculator.summary_stats(results, horizon: 30)
+      stats.merge(
+        failed_years: results.select { |r| r[:milestones][30] && r[:depleted_at] && r[:depleted_at] <= 30 }.map { |r| r[:starting_year] },
+        later_failed_years: results.select { |r| r[:depleted_at] && r[:depleted_at] > 30 }.map { |r| r[:starting_year] }
+      )
+    end
+    years = calculator.available_years
+
+    {
+      by_rate: by_rate,
+      example_spending: FAQ_EXAMPLE_SPENDING,
+      example_portfolio: Calculator.required_portfolio(annual_spending: FAQ_EXAMPLE_SPENDING, withdrawal_rate: 4.0),
+      first_year: years.first,
+      last_year: years.last
+    }
+  end
 
   def build_horizon_chart_data(results)
     # Build data for each horizon: { 10 => [{year: 1926, value: 123}, ...], 20 => [...], ... }

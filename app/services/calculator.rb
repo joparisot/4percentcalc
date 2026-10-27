@@ -3,6 +3,11 @@ class Calculator
 
   attr_reader :data_by_year
 
+  # Portfolio needed so that year one's withdrawal covers annual_spending.
+  def self.required_portfolio(annual_spending:, withdrawal_rate:)
+    (annual_spending.to_f * 100 / withdrawal_rate.to_f).round
+  end
+
   def initialize
     @data = load_data
     @data_by_year = @data.index_by { |d| d["year"] }

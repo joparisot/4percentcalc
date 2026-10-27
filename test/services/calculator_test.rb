@@ -82,4 +82,16 @@ class CalculatorTest < ActiveSupport::TestCase
     # Historical 4% rule should have ~95%+ success rate over 30 years
     assert stats[:success_rate] > 80, "4% rule should have high historical success rate"
   end
+
+  test "required portfolio divides spending by the withdrawal rate" do
+    assert_equal 2_000_000, Calculator.required_portfolio(annual_spending: 80_000, withdrawal_rate: 4.0)
+    assert_equal 1_000_000, Calculator.required_portfolio(annual_spending: 40_000, withdrawal_rate: 4)
+    assert_equal 1_000_000, Calculator.required_portfolio(annual_spending: 50_000, withdrawal_rate: 5.0)
+  end
+
+  test "required portfolio rounds to the nearest dollar" do
+    assert_equal 2_285_714, Calculator.required_portfolio(annual_spending: 80_000, withdrawal_rate: 3.5)
+    assert_equal 1_666_667, Calculator.required_portfolio(annual_spending: 50_000, withdrawal_rate: 3.0)
+    assert_equal 888_889, Calculator.required_portfolio(annual_spending: 40_000, withdrawal_rate: 4.5)
+  end
 end

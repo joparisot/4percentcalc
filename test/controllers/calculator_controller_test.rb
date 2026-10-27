@@ -125,4 +125,74 @@ class CalculatorControllerTest < ActionDispatch::IntegrationTest
     end
     refute_match %r{<loc>[^<]*\?}, sitemap
   end
+
+  test "index defaults to portfolio mode" do
+    get root_path
+    assert_select "input[type='radio'][name='mode'][value='portfolio'][checked]"
+    assert_select "[data-calculator-target='spendingDisplay']", count: 0
+  end
+
+  test "annual_spending link opens spending mode and backtests the required portfolio" do
+    get root_path, params: { annual_spending: 80_000, withdrawal_rate: 4.0 }
+    assert_response :success
+    assert_select "input[type='radio'][name='mode'][value='spending'][checked]"
+    assert_select "input[name='annual_spending'][value='80000']"
+    assert_select "input[name='initial_amount'][value='2000000']"
+    assert_select "[data-calculator-target='requiredAmount']", "$2,000,000"
+    assert_select "p", /You need\s+\$2,000,000\s+to withdraw \$80,000\/yr\s+at 4%/
+    assert_select "[data-horizon-chart-initial-amount-value='2000000']"
+  end
+
+  test "calculate in spending mode recomputes the portfolio for the rate" do
+    post calculate_path, params: { mode: "spending", annual_spending: 80_000, initial_amount: 1_000_000, withdrawal_rate: 3.5 },
+      headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    assert_response :success
+    assert_match "$2,285,714", response.body
+    assert_match "data-horizon-chart-initial-amount-value=\"2285714\"", response.body
+  end
+
+  test "calculate turbo stream renders the same calculator as the homepage" do
+    post calculate_path, params: { initial_amount: 1_000_000, withdrawal_rate: 4.0 },
+      headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    assert_match "Copy link to this scenario", response.body
+    assert_match "I know my spending", response.body
+  end
+
+  test "homepage has an FAQ with FAQPage JSON-LD matching the visible questions" do
+    get root_path
+    questions = css_select("section[aria-labelledby='faq-heading'] details summary").map { |n| n.text.strip }
+    assert_operator questions.size, :>=, 6
+    assert_includes questions, "How much do I need to retire using the 4% rule?"
+
+    faq = css_select("script[type='application/ld+json']").map { |n| JSON.parse(n.text) }.find { |d| d["@type"] == "FAQPage" }
+    assert_equal "https://schema.org", faq["@context"]
+    assert_equal questions, faq["mainEntity"].map { |q| q["name"] }
+    faq["mainEntity"].each do |q|
+      assert_equal "Question", q["@type"]
+      assert_equal "Answer", q.dig("acceptedAnswer", "@type")
+      assert q.dig("acceptedAnswer", "text").present?
+      refute_match(/<[a-z]/, q.dig("acceptedAnswer", "text"))
+      refute_match(/&[a-z]+;/, q.dig("acceptedAnswer", "text"))
+    end
+  end
+
+  test "FAQ answers use figures from the data" do
+    get root_path
+    calculator = Calculator.new
+    results = calculator.backtest_all(initial_amount: 1_000_000, withdrawal_rate: 4.0)
+    stats = calculator.summary_stats(results)
+    failed = results.select { |r| r[:milestones][30] && r[:depleted_at] && r[:depleted_at] <= 30 }.map { |r| r[:starting_year] }
+
+    faq = css_select("section[aria-labelledby='faq-heading']")
+    assert_match "(#{stats[:success_rate].to_s.delete_suffix(".0")}%)", faq.text
+    assert_match "you need $2,000,000", faq.text
+    failed.each { |year| assert_select faq, "a[href='#{year_detail_path(year)}']", year.to_s }
+    assert_select faq, "a[href='#{root_path(withdrawal_rate: 3.5)}']"
+    assert_select faq, "a[href='#{methodology_path}']"
+  end
+
+  test "homepage subtitle covers both intents" do
+    get root_path
+    assert_select "main p", /See how much you need to retire, and whether it would have lasted in every market since 1927/
+  end
 end
