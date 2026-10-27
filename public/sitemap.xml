@@ -2,6 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://www.4percentcalc.com/</loc><lastmod>2026-10-27</lastmod><priority>1.0</priority></url>
   <url><loc>https://www.4percentcalc.com/methodology</loc><lastmod>2026-10-25</lastmod><priority>0.7</priority></url>
+  <url><loc>https://www.4percentcalc.com/year_detail/1926</loc><lastmod>2026-10-27</lastmod><priority>0.5</priority></url>
   <url><loc>https://www.4percentcalc.com/year_detail/1927</loc><lastmod>2026-10-27</lastmod><priority>0.5</priority></url>
   <url><loc>https://www.4percentcalc.com/year_detail/1928</loc><lastmod>2026-10-27</lastmod><priority>0.5</priority></url>
   <url><loc>https://www.4percentcalc.com/year_detail/1929</loc><lastmod>2026-10-27</lastmod><priority>0.5</priority></url>
@@ -101,5 +102,4 @@
   <url><loc>https://www.4percentcalc.com/year_detail/2023</loc><lastmod>2026-10-27</lastmod><priority>0.5</priority></url>
   <url><loc>https://www.4percentcalc.com/year_detail/2024</loc><lastmod>2026-10-27</lastmod><priority>0.5</priority></url>
   <url><loc>https://www.4percentcalc.com/year_detail/2025</loc><lastmod>2026-10-27</lastmod><priority>0.5</priority></url>
-  <url><loc>https://www.4percentcalc.com/year_detail/2026</loc><lastmod>2026-10-27</lastmod><priority>0.5</priority></url>
 </urlset>

@@ -102,8 +102,8 @@ class CalculatorController < ApplicationController
       results = calculator.backtest_all(initial_amount: 1_000_000, withdrawal_rate: rate)
       stats = calculator.summary_stats(results, horizon: 30)
       stats.merge(
-        failed_years: results.select { |r| r[:milestones][30] && r[:depleted_at] && r[:depleted_at] <= 30 }.map { |r| r[:starting_year] },
-        later_failed_years: results.select { |r| r[:depleted_at] && r[:depleted_at] > 30 }.map { |r| r[:starting_year] }
+        failed_years: results.select { |r| r[:milestones][30] && r[:depleted_at] && r[:depleted_at] < 30 }.map { |r| r[:starting_year] },
+        later_failed_years: results.select { |r| r[:depleted_at] && r[:depleted_at] >= 30 }.map { |r| r[:starting_year] }
       )
     end
     years = calculator.available_years

@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <title><%= content_for(:title) || "The 4% Rule Calculator — Backtest Your Retirement Against 100 Years of Market History" %></title>
-    <meta name="description" content="<%= content_for(:description) || "Test the 4% retirement rule against every year of real S&P 500 history since 1927. See your portfolio's success rate, worst-case and best-case starting years." %>">
+    <meta name="description" content="<%= content_for(:description) || "Test the 4% retirement rule against every year of real S&P 500 history since 1926. See your portfolio's success rate, worst-case and best-case starting years." %>">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta charset="utf-8">
 
@@ -10,12 +10,12 @@
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="The 4% Rule Calculator">
     <meta property="og:title" content="<%= content_for(:title) || "The 4% Rule Calculator — Backtest Your Retirement Against 100 Years of Market History" %>">
-    <meta property="og:description" content="<%= content_for(:description) || "Test the 4% retirement rule against every year of real S&P 500 history since 1927. See your portfolio's success rate, worst-case and best-case starting years." %>">
+    <meta property="og:description" content="<%= content_for(:description) || "Test the 4% retirement rule against every year of real S&P 500 history since 1926. See your portfolio's success rate, worst-case and best-case starting years." %>">
     <meta property="og:url" content="<%= request.original_url %>">
     <meta property="og:image" content="<%= request.base_url %>/og.png">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="The 4% Rule Calculator">
-    <meta name="twitter:description" content="Test the 4% retirement rule against every year of real S&P 500 history since 1927.">
+    <meta name="twitter:description" content="Test the 4% retirement rule against every year of real S&P 500 history since 1926.">
     <meta name="twitter:image" content="<%= request.base_url %>/og.png">
     <%= yield :head %>
     <%= csrf_meta_tags %>

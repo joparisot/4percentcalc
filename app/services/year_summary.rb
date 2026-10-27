@@ -88,7 +88,7 @@ class YearSummary
     worst_year = invested_years.min_by { |y| @market_data[y]["sp500_return"] }
     worst_return = @market_data[worst_year]["sp500_return"]
     if worst_return.negative?
-      "Its worst year was the 12 months to January #{worst_year}, when the S&P 500 lost #{format_percent(-worst_return)} including dividends."
+      "Its worst year was #{worst_year}, when the S&P 500 lost #{format_percent(-worst_return)} including dividends."
     else
       "The S&P 500 never had a losing year over that span."
     end

@@ -62,8 +62,9 @@ namespace :shiller do
       # Inflation = (cpi_end - cpi_start) / cpi_start
       inflation = (current[:cpi] - previous[:cpi]) / previous[:cpi]
 
+      # Label each return by the year it covers: Jan prev_year to Jan year.
       result << {
-        year: year,
+        year: prev_year,
         sp500_return: total_return.round(4),
         inflation: inflation.round(4)
       }

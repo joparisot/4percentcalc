@@ -20,7 +20,7 @@ class YearSummaryTest < ActiveSupport::TestCase
     assert_equal "Retiring in 2000: a 4% withdrawal ran out of money in year 3", summary.headline
     assert_equal "Retiring in 2000 on the 4% Rule: Ran out in year 3 | 4% Rule Calculator", summary.title
     assert_equal "Retiring in 2000 with $1M and a 4% inflation-adjusted withdrawal, the money ran out in year 3 (2002).", summary.description
-    assert_includes summary.sentences, "Its worst year was the 12 months to January 2001, when the S&P 500 lost 30% including dividends."
+    assert_includes summary.sentences, "Its worst year was 2001, when the S&P 500 lost 30% including dividends."
     assert_includes summary.sentences, "Inflation had pushed the yearly withdrawal from $40K to $48K by then."
   end
 

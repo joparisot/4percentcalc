@@ -8,7 +8,8 @@ class CalculatorTest < ActiveSupport::TestCase
   test "loads historical data" do
     years = @calculator.available_years
     assert years.any?, "Should have available years"
-    assert years.include?(1927), "Should include 1927"
+    assert_equal 1926, years.first
+    assert_equal 2025, years.last
     assert years.include?(2023), "Should include 2023"
   end
 
@@ -93,5 +94,36 @@ class CalculatorTest < ActiveSupport::TestCase
     assert_equal 2_285_714, Calculator.required_portfolio(annual_spending: 80_000, withdrawal_rate: 3.5)
     assert_equal 1_666_667, Calculator.required_portfolio(annual_spending: 50_000, withdrawal_rate: 3.0)
     assert_equal 888_889, Calculator.required_portfolio(annual_spending: 40_000, withdrawal_rate: 4.5)
+  end
+
+  test "each data year holds that calendar year's return" do
+    # Jan 1929 to Jan 1930 (the Great Crash year) lost money; Jan 1928 to Jan 1929 was a +40% boom.
+    assert_operator @calculator.data_by_year[1929]["sp500_return"], :<, 0
+    assert_operator @calculator.data_by_year[1928]["sp500_return"], :>, 0.4
+    assert_operator @calculator.data_by_year[1931]["sp500_return"], :<, -0.4
+  end
+
+  test "a 1929 retiree's first year applies the 1929 return" do
+    result = @calculator.backtest(initial_amount: 1_000_000, withdrawal_rate: 4, starting_year: 1929)
+    assert_equal 24, result[:depleted_at]
+  end
+
+  test "start years cover every year with at least 10 years of data" do
+    years = @calculator.backtest_all(initial_amount: 1_000_000, withdrawal_rate: 4).map { |r| r[:starting_year] }
+    assert_equal 1926, years.first
+    assert_equal @calculator.available_years.last - 9, years.last
+  end
+
+  test "summary_stats counts a portfolio that funded every year of the horizon as a success" do
+    results = [
+      { starting_year: 1, milestones: { 30 => 50_000 }, depleted_at: 30 },
+      { starting_year: 2, milestones: { 30 => 0 }, depleted_at: 25 },
+      { starting_year: 3, milestones: { 30 => 0 }, depleted_at: 20 },
+      { starting_year: 4, milestones: { 30 => 2_000_000 }, depleted_at: nil }
+    ]
+    stats = @calculator.summary_stats(results, horizon: 30)
+    assert_equal 50.0, stats[:success_rate]
+    assert_equal 3, stats[:worst_year], "earliest depletion breaks ties between depleted years"
+    assert_equal 4, stats[:best_year]
   end
 end
