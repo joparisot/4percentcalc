@@ -12,6 +12,7 @@ class CalculatorController < ApplicationController
     @results = results.reverse
     @stats = calculator.summary_stats(results, horizon: 30)
     @horizon_chart_data = build_horizon_chart_data(@results)
+    @notable_years = YearSummary.notes.slice(*YearSummary.featured_years)
 
     respond_to do |format|
       format.html
@@ -44,11 +45,34 @@ class CalculatorController < ApplicationController
     @withdrawal_rate = params[:withdrawal_rate]&.to_f || 4.0
 
     calculator = Calculator.new
+    years = calculator.available_years
+    raise ActionController::RoutingError, "No data for #{params[:year]}" unless years.include?(@starting_year)
+
     @detail = calculator.backtest(
       initial_amount: @initial_amount,
       withdrawal_rate: @withdrawal_rate,
       starting_year: @starting_year
     )
+    all_results = calculator.backtest_all(
+      initial_amount: @initial_amount,
+      withdrawal_rate: @withdrawal_rate
+    )
+    stats = calculator.summary_stats(all_results, horizon: 30)
+    rank = { stats&.dig(:worst_year) => :worst, stats&.dig(:best_year) => :best }[@starting_year]
+
+    @summary = YearSummary.new(
+      result: @detail,
+      initial_amount: @initial_amount,
+      withdrawal_rate: @withdrawal_rate,
+      market_data: calculator.data_by_year,
+      rank: rank
+    )
+    @scenario_params = request.query_parameters.slice("initial_amount", "withdrawal_rate")
+    @previous_year = years.select { |y| y < @starting_year }.max
+    @next_year = years.select { |y| y > @starting_year }.min
+    if @summary.depleted?
+      @other_depleted_years = all_results.filter_map { |r| r[:starting_year] if r[:depleted_at] } - [@starting_year]
+    end
 
     # Build year-by-year data for chart
     @chart_data = build_chart_data(@starting_year, @initial_amount, @withdrawal_rate)

@@ -1,6 +1,8 @@
 class Calculator
   MILESTONES = [10, 20, 30, 40, 50].freeze
 
+  attr_reader :data_by_year
+
   def initialize
     @data = load_data
     @data_by_year = @data.index_by { |d| d["year"] }
