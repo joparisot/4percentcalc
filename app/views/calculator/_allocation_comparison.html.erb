@@ -37,7 +37,7 @@
             <td class="py-3 px-2 text-right font-bold text-[#1F2937]" data-allocation-success><%= row[:stats]&.dig(:success_rate) || 0 %>%</td>
             <td class="py-3 px-2 text-right text-[#1F2937]">
               <% if (worst = row[:stats]&.dig(:worst_year)) %>
-                <%= link_to worst, year_detail_path(worst, initial_amount: @initial_amount, withdrawal_rate: @withdrawal_rate, stock_allocation: (allocation unless baseline)), class: "hover:text-[#7C3AED] hover:underline" %>
+                <%= link_to worst, year_detail_path(worst, year_detail_scenario_params(initial_amount: @initial_amount, withdrawal_rate: @withdrawal_rate, fee: @fee, stock_allocation: (allocation unless baseline))), class: "hover:text-[#7C3AED] hover:underline" %>
               <% else %>N/A<% end %>
             </td>
             <td class="py-3 px-2 text-right text-[#1F2937]"><%= format_currency(row[:stats]&.dig(:median_final_value)) %></td>

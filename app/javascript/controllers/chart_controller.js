@@ -1,8 +1,15 @@
 import { Controller } from "@hotwired/stimulus"
+import { marketEventsPlugin } from "controllers/market_events"
 
 export default class extends Controller {
   static targets = ["canvas"]
-  static values = { data: Array, comparison: Array, comparisonLabel: String }
+  static values = {
+    data: Array,
+    comparison: Array,
+    comparisonLabel: String,
+    events: { type: Array, default: [] },
+    startingYear: Number
+  }
 
   async connect() {
     // Dynamically import Chart.js
@@ -28,9 +35,15 @@ export default class extends Controller {
     const labels = Array.from({ length }, (_, i) => `Year ${i}`)
     const values = data.map(d => d.value)
     const comparisonValues = comparison.map(d => d.value)
+    // Point k is the balance after k years, so an event in calendar year Y sits between points Y - start and Y - start + 1.
+    const start = this.startingYearValue
+    const events = this.eventsValue.filter(e => e.year >= start && e.year - start < data.length - 1)
+    const eventByYear = new Map(events.map(e => [e.year, e.label]))
+    this.canvasTarget.dataset.markedEvents = events.map(e => e.year).join(",")
 
     this.chart = new this.Chart(ctx, {
       type: 'line',
+      plugins: [marketEventsPlugin(events.map(e => ({ index: e.year - start + 0.5, label: `${e.label} (${e.year})` })))],
       data: {
         labels: labels,
         datasets: [{
@@ -78,6 +91,10 @@ export default class extends Controller {
             cornerRadius: 8,
             displayColors: false,
             callbacks: {
+              footer: (context) => {
+                const event = eventByYear.get(start + data[context[0].dataIndex].year - 1)
+                return event ? `During this year: ${event}` : ''
+              },
               label: function(context) {
                 const name = context.dataset.label
                 const value = context.raw

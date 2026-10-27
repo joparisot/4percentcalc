@@ -1,9 +1,11 @@
 import { Controller } from "@hotwired/stimulus"
+import { marketEventsPlugin } from "controllers/market_events"
 
 export default class extends Controller {
   static targets = ["canvas", "dropdown", "title", "scaleButton", "scaleNote"]
   static values = {
     data: Object,
+    events: { type: Array, default: [] },
     initialAmount: Number,
     horizon: { type: Number, default: 30 },
     comparison: Object,
@@ -104,6 +106,9 @@ export default class extends Controller {
     const comparisonValues = labels.map(year => comparisonByYear.has(year) ? comparisonByYear.get(year) : null)
     const naIndex = values.findIndex((v, i) => v === null && values.slice(i).every(rest => rest === null))
     this.canvasTarget.dataset.naFrom = naIndex === -1 ? "" : labels[naIndex]
+    const events = this.eventsValue.filter(e => labels.includes(e.year))
+    const eventByYear = new Map(events.map(e => [e.year, e.label]))
+    this.canvasTarget.dataset.markedEvents = events.map(e => e.year).join(",")
     const initialAmount = this.initialAmountValue
     const horizon = this.horizonValue
     const scale = this.scale
@@ -121,7 +126,10 @@ export default class extends Controller {
 
     this.chart = new this.Chart(ctx, {
       type: 'line',
-      plugins: [this.naZonePlugin(naIndex)],
+      plugins: [
+        this.naZonePlugin(naIndex),
+        marketEventsPlugin(events.map(e => ({ index: labels.indexOf(e.year), label: e.label })))
+      ],
       data: {
         labels: labels,
         datasets: [
@@ -193,6 +201,10 @@ export default class extends Controller {
             callbacks: {
               title: function(context) {
                 return `Started in ${context[0].label}, after ${horizon} years`
+              },
+              footer: (context) => {
+                const event = eventByYear.get(Number(context[0].label))
+                return event ? `Year one: ${event}` : ''
               },
               label: (context) => {
                 const value = seriesValues[context.datasetIndex][context.dataIndex]

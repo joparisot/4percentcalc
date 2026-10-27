@@ -142,6 +142,18 @@ class HorizonChartTest < ActionDispatch::SystemTestCase
     end
   end
 
+  test "major market events are marked on the horizon and year-detail charts" do
+    visit root_path
+    canvas = "canvas[data-horizon-chart-target='canvas']"
+    assert_selector "#{canvas}[data-marked-events='1929,1973,1987,2000,2008']", wait: 3
+    assert_text "Major market event"
+
+    visit year_detail_path(2000)
+    assert_selector "canvas[data-chart-target='canvas'][data-marked-events='2000,2008,2020']", wait: 3
+    assert_text "Major market event"
+  end
+
+
   test "chart overlays the chosen Trinity mix and the compare button switches it" do
     visit root_path
     assert_selector "canvas[data-horizon-chart-target='canvas'][width]", wait: 3

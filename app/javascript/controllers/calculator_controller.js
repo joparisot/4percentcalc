@@ -123,6 +123,8 @@ export default class extends Controller {
     if (horizon && horizon.value) params.set('horizon', horizon.value)
     const allocation = document.getElementById('stock_allocation_hidden')
     if (allocation && allocation.value && allocation.value !== '50') params.set('stock_allocation', allocation.value)
+    const fee = this.hasFormTarget && this.formTarget.elements['fee']
+    if (fee && parseFloat(fee.value) > 0) params.set('fee', fee.value)
 
     return `${window.location.origin}${window.location.pathname}?${params.toString()}`
   }

@@ -149,4 +149,21 @@ module CalculatorHelper
       end
     }
   end
+
+  FEE_OPTIONS = [0, 0.05, 0.1, 0.25, 0.5, 0.75, 1, 1.5, 2].freeze
+
+  def format_fee(fee)
+    format("%g", fee.to_f)
+  end
+
+  def fee_options(selected)
+    fees = (FEE_OPTIONS + [selected]).map(&:to_f).uniq.sort
+    options_for_select(fees.map { |fee| [fee.zero? ? "None" : "#{format_fee(fee)}%", format_fee(fee)] }, format_fee(selected))
+  end
+
+  def year_detail_scenario_params(initial_amount:, withdrawal_rate:, fee:, stock_allocation: nil)
+    { initial_amount: initial_amount, withdrawal_rate: withdrawal_rate }
+      .merge(fee.positive? ? { fee: format_fee(fee) } : {})
+      .merge(stock_allocation ? { stock_allocation: stock_allocation } : {})
+  end
 end
