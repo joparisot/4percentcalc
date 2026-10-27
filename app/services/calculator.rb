@@ -67,7 +67,7 @@ class Calculator
   # Run backtest for all starting years
   def backtest_all(initial_amount:, withdrawal_rate:)
     # Only test years where we have at least 10 years of data
-    max_start_year = available_years.last - 10
+    max_start_year = available_years.last - (MILESTONES.min - 1)
 
     available_years.select { |y| y <= max_start_year }.map do |year|
       backtest(
@@ -84,13 +84,14 @@ class Calculator
 
     return nil if completed_results.empty?
 
-    survived = completed_results.reject { |r| r[:depleted_at] && r[:depleted_at] <= horizon }
+    # depleted_at is the number of full withdrawals made, so depleted_at == horizon still lasted the horizon.
+    survived = completed_results.reject { |r| r[:depleted_at] && r[:depleted_at] < horizon }
     final_values = completed_results.map { |r| r[:milestones][horizon] }.compact.sort
 
     {
       success_rate: (survived.count.to_f / completed_results.count * 100).round(1),
       total_periods: completed_results.count,
-      worst_year: completed_results.min_by { |r| r[:milestones][horizon] || 0 }&.dig(:starting_year),
+      worst_year: completed_results.min_by { |r| [r[:milestones][horizon] || 0, r[:depleted_at] || Float::INFINITY] }&.dig(:starting_year),
       best_year: completed_results.max_by { |r| r[:milestones][horizon] || 0 }&.dig(:starting_year),
       median_final_value: final_values[final_values.length / 2]
     }

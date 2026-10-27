@@ -58,17 +58,17 @@ class CalculatorControllerTest < ActionDispatch::IntegrationTest
   test "1966 page has a depletion headline, summary, related years, and prev/next links" do
     get year_detail_path(1966)
     assert_response :success
-    assert_select "h1", "Retiring in 1966: a 4% withdrawal ran out of money in year 31"
-    assert_select "main p", /the money ran out in year 31 \(1996\)/
+    assert_select "h1", "Retiring in 1966: a 4% withdrawal ran out of money in year 26"
+    assert_select "main p", /the money ran out in year 26 \(1991\)/
     assert_select "a[rel='prev'][href='#{year_detail_path(1965)}']"
     assert_select "a[rel='next'][href='#{year_detail_path(1967)}']"
     assert_select "nav", /Other retirements that ran out of money/
-    assert_select "nav a[href='#{year_detail_path(1930)}']"
+    assert_select "nav a[href='#{year_detail_path(1929)}']"
   end
 
   test "worst start year from the homepage gets the worst-year headline" do
-    get year_detail_path(1930)
-    assert_select "h1", "Retiring in 1930: the worst year to start the 4% rule"
+    get year_detail_path(1929)
+    assert_select "h1", "Retiring in 1929: the worst year to start the 4% rule"
   end
 
   test "surviving year pages skip the related failed years" do
@@ -78,9 +78,9 @@ class CalculatorControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "prev/next links stop at the ends of the data and keep scenario params" do
-    get year_detail_path(1927), params: { withdrawal_rate: 5.0 }
+    get year_detail_path(1926), params: { withdrawal_rate: 5.0 }
     assert_select "a[rel='prev']", count: 0
-    assert_select "a[rel='next'][href='#{year_detail_path(1928, withdrawal_rate: 5.0)}']"
+    assert_select "a[rel='next'][href='#{year_detail_path(1927, withdrawal_rate: 5.0)}']"
     assert_select "title", /on the 5% Rule/
 
     get year_detail_path(Calculator.new.available_years.last)
@@ -193,6 +193,6 @@ class CalculatorControllerTest < ActionDispatch::IntegrationTest
 
   test "homepage subtitle covers both intents" do
     get root_path
-    assert_select "main p", /See how much you need to retire, and whether it would have lasted in every market since 1927/
+    assert_select "main p", /See how much you need to retire, and whether it would have lasted in every market since 1926/
   end
 end
