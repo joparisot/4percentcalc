@@ -64,6 +64,22 @@ class HorizonChartTest < ActionDispatch::SystemTestCase
     assert_selector "canvas[data-horizon-chart-target='canvas'][width]", wait: 5
   end
 
+  test "initial amount legend label has a single dollar sign" do
+    visit root_path
+    assert_selector "canvas[data-horizon-chart-target='canvas'][width]", wait: 3
+
+    label = page.evaluate_script(<<~JS)
+      (() => {
+        const el = document.querySelector("[data-controller~='horizon-chart']")
+        const ctrl = window.Stimulus.getControllerForElementAndIdentifier(el, "horizon-chart")
+        return ctrl.chart.data.datasets[1].label
+      })()
+    JS
+
+    assert_match(/\AInitial Amount \(\$\d/, label)
+    refute_includes label, "$$"
+  end
+
   test "horizon selection persists through Turbo updates" do
     visit root_path
 

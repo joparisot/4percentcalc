@@ -87,7 +87,7 @@ export default class extends Controller {
             pointHoverBackgroundColor: '#7C3AED'
           },
           {
-            label: `Initial Amount ($${this.formatCurrency(initialAmount)})`,
+            label: `Initial Amount (${this.formatCurrency(initialAmount)})`,
             data: referenceLineData,
             borderColor: '#9CA3AF',
             borderWidth: 2,
