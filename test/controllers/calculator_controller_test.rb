@@ -14,6 +14,13 @@ class CalculatorControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name='initial_amount'][value='500000']"
   end
 
+  test "index is gzip-compressed when the client accepts it" do
+    get root_path, headers: { "Accept-Encoding" => "gzip" }
+    assert_response :success
+    assert_equal "gzip", response.headers["Content-Encoding"]
+    assert_includes Zlib.gunzip(response.body), "The 4% Rule Calculator"
+  end
+
   test "methodology page renders" do
     get methodology_path
     assert_response :success
