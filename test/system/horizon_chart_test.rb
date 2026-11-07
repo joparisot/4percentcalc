@@ -133,11 +133,10 @@ class HorizonChartTest < ActionDispatch::SystemTestCase
     assert_selector "#{canvas}[data-na-from='']"
   end
 
-  test "legend explains the red band and depleted markers" do
+  test "legend explains the red band" do
     visit root_path
     within "[data-horizon-legend]" do
       assert_text "Below the starting amount"
-      assert_text "Ran out of money"
       refute_text "1–4×"
     end
   end
@@ -181,11 +180,6 @@ class HorizonChartTest < ActionDispatch::SystemTestCase
     assert_selector "#{canvas}[data-rendered-scenarios='75']"
   ensure
     page.execute_script("localStorage.clear()")
-  end
-
-  test "depleted start years are marked on the chart" do
-    visit root_path
-    assert_selector "canvas[data-horizon-chart-target='canvas'][data-depleted-years*='1966']", wait: 3
   end
 
   private

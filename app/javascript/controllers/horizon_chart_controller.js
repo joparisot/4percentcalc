@@ -160,11 +160,6 @@ export default class extends Controller {
     const smallest = Math.min(...rawByScenario.flatMap(raw => raw.filter(v => v > 0)), initialAmount)
     const floor = 10 ** Math.floor(Math.log10(smallest))
     const plot = (series) => log ? series.map(v => v === null ? null : Math.max(v, floor)) : series
-
-    const depletedIndexes = new Set()
-    rawByScenario.forEach(raw => raw.forEach((v, i) => { if (v !== null && v <= 0) depletedIndexes.add(i) }))
-    const depleted = [...depletedIndexes].sort((a, b) => a - b)
-    this.canvasTarget.dataset.depletedYears = depleted.map(i => labels[i]).join(",")
     this.updateScaleControls(scale)
 
     const referenceLineData = values.map(v => v === null ? null : initialAmount)
@@ -204,7 +199,6 @@ export default class extends Controller {
       plugins: [
         this.belowStartPlugin(initialAmount),
         this.naZonePlugin(naIndex),
-        this.depletedMarkersPlugin(depleted),
         marketEventsPlugin(events.map(e => ({ index: labels.indexOf(e.year), label: e.label })))
       ],
       data: {
@@ -308,23 +302,6 @@ export default class extends Controller {
         ctx.save()
         ctx.fillStyle = 'rgba(239, 68, 68, 0.07)'
         ctx.fillRect(chartArea.left, top, chartArea.right - chartArea.left, chartArea.bottom - top)
-        ctx.restore()
-      }
-    }
-  }
-
-  depletedMarkersPlugin(indexes) {
-    return {
-      id: 'depletedMarkers',
-      afterDatasetsDraw: (chart) => {
-        const { ctx, chartArea, scales: { x } } = chart
-        ctx.save()
-        ctx.fillStyle = '#EF4444'
-        indexes.forEach((index) => {
-          ctx.beginPath()
-          ctx.arc(x.getPixelForValue(index), chartArea.bottom - 1, 3.5, 0, Math.PI * 2)
-          ctx.fill()
-        })
         ctx.restore()
       }
     }
