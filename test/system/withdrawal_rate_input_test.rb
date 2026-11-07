@@ -63,6 +63,29 @@ class WithdrawalRateInputTest < ActionDispatch::SystemTestCase
     assert_equal "4.5", find(SLIDER).value
   end
 
+  test "negative rates clamp to the minimum and text mixed with digits is rejected" do
+    visit root_path(withdrawal_rate: 4.5)
+    wait_for_chart
+
+    box = find(RATE_BOX)
+    box.fill_in with: "abc8"
+    box.send_keys :enter
+    assert_equal "4.5", find(RATE_BOX).value
+    assert_equal "4.5", find(SLIDER).value
+
+    box = find(RATE_BOX)
+    box.fill_in with: "-2"
+    box.send_keys :enter
+    assert_selector "#{SLIDER}[value='1']", wait: 5
+    assert_equal "1", find(RATE_BOX).value
+
+    box = find(RATE_BOX)
+    box.fill_in with: "3,5 %"
+    box.send_keys :enter
+    assert_selector "#{SLIDER}[value='3.5']", wait: 5
+    assert_equal "3.5", current_query["withdrawal_rate"]
+  end
+
   test "moving the slider updates the rate box, the chart and the URL" do
     visit root_path
     wait_for_chart

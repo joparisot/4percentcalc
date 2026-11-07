@@ -37,8 +37,9 @@ export default class extends Controller {
   commitRate() {
     if (!this.hasRateDisplayTarget || !this.hasRateTarget) return
 
-    const typed = parseFloat(this.rateDisplayTarget.value.replace(',', '.').replace(/[^0-9.]/g, ''))
-    if (!Number.isFinite(typed)) return this.revertRate()
+    const text = this.rateDisplayTarget.value.trim().replace(/\s*%$/, '').replace(',', '.')
+    if (!/^-?(\d+\.?\d*|\.\d+)$/.test(text)) return this.revertRate()
+    const typed = parseFloat(text)
 
     const slider = this.rateTarget
     const rate = Math.min(Math.max(Math.round(typed * 10) / 10, parseFloat(slider.min)), parseFloat(slider.max))
