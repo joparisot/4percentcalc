@@ -72,7 +72,7 @@ class HorizonChartTest < ActionDispatch::SystemTestCase
       (() => {
         const el = document.querySelector("[data-controller~='horizon-chart']")
         const ctrl = window.Stimulus.getControllerForElementAndIdentifier(el, "horizon-chart")
-        return ctrl.chart.data.datasets[1].label
+        return ctrl.chart.data.datasets[0].label
       })()
     JS
 
@@ -159,19 +159,26 @@ class HorizonChartTest < ActionDispatch::SystemTestCase
     page.execute_script("localStorage.clear()")
     visit root_path
     canvas = "canvas[data-horizon-chart-target='canvas']"
+    chip = ->(key) { find("[data-horizon-chart-target='chip'][data-scenario='#{key}']") }
     assert_selector "#{canvas}[width][data-rendered-scenarios='100,50']", wait: 3
-    assert_equal ["100% S&P 500", "50/50 stocks/bonds"], chart_dataset_labels.values_at(0, 2)
+    assert_equal ["100% S&P 500", "50/50 stocks/bonds"], chart_dataset_labels.drop(1)
 
-    find("[data-horizon-chart-target='chip'][data-scenario='75']").click
+    chip.call(75).click
     assert_selector "#{canvas}[data-rendered-scenarios='100,75,50']"
-    assert_equal ["100% S&P 500", "75/25 stocks/bonds", "50/50 stocks/bonds"], chart_dataset_labels.values_at(0, 2, 3)
+    assert_equal ["100% S&P 500", "75/25 stocks/bonds", "50/50 stocks/bonds"], chart_dataset_labels.drop(1)
 
-    find("[data-horizon-chart-target='chip'][data-scenario='50']").click
-    assert_selector "#{canvas}[data-rendered-scenarios='100,75']"
-    assert_selector "[data-horizon-chart-target='chip'][data-scenario='100'][disabled]"
+    chip.call(100).click
+    assert_selector "#{canvas}[data-rendered-scenarios='75,50']"
+    assert_equal ["75/25 stocks/bonds", "50/50 stocks/bonds"], chart_dataset_labels.drop(1)
+
+    chip.call(50).click
+    assert_selector "#{canvas}[data-rendered-scenarios='75']"
+    assert_selector "[data-horizon-chart-target='chip'][data-scenario='75'][aria-disabled='true']"
+    chip.call(75).click
+    assert_selector "#{canvas}[data-rendered-scenarios='75']"
 
     select "20 years", from: "horizon-select"
-    assert_selector "#{canvas}[data-rendered-scenarios='100,75']"
+    assert_selector "#{canvas}[data-rendered-scenarios='75']"
   ensure
     page.execute_script("localStorage.clear()")
   end

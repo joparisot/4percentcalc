@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { styleChip } from "controllers/scenario_chip"
 
 // Tabs that switch the health table between the Trinity study stock/bond mixes.
 export default class extends Controller {
@@ -35,16 +36,8 @@ export default class extends Controller {
     this.tabTargets.forEach((tab) => {
       const active = tab.dataset.scenario === key
       tab.setAttribute("aria-selected", String(active))
-      tab.classList.toggle("bg-white", active)
-      tab.classList.toggle("shadow-sm", active)
-      const color = this.colorFor(tab)
-      tab.style.borderColor = active ? color : ""
-      tab.style.color = active ? color : ""
+      styleChip(tab, tab.dataset.color, active)
     })
     this.element.dataset.activeScenario = key
-  }
-
-  colorFor(tab) {
-    return tab.querySelector("span").style.backgroundColor
   }
 }

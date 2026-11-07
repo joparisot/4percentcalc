@@ -5,7 +5,7 @@ class ReverseCalculatorTest < ActionDispatch::SystemTestCase
     page.evaluate_script(<<~JS)
       (() => {
         const el = document.querySelector("[data-controller~='horizon-chart']")
-        return window.Stimulus.getControllerForElementAndIdentifier(el, "horizon-chart").chart.data.datasets[1].data[0]
+        return window.Stimulus.getControllerForElementAndIdentifier(el, "horizon-chart").chart.data.datasets[0].data[0]
       })()
     JS
   end

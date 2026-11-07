@@ -235,9 +235,9 @@
                 data-scenario="<%= a %>"
                 data-action="horizon-chart#toggleScenario"
                 aria-pressed="false"
-                <% if a == 100 %>disabled title="Always shown"<% end %>
-                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold transition-colors border-gray-300 text-[#6B7280] bg-[#FAFAFA]">
-          <span class="w-2.5 h-2.5 rounded-full" style="background-color: <%= scenario_color(a) %>"></span><%= Calculator.allocation_label(a) %>
+                data-color="<%= scenario_color(a) %>"
+                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors border-gray-300 text-[#6B7280] bg-[#FAFAFA]">
+          <span class="w-2.5 h-2.5 rounded-full" style="background-color: #D1D5DB"></span><%= Calculator.allocation_label(a) %>
         </button>
       <% end %>
     </div>
@@ -287,9 +287,9 @@
 
   <div role="tablist" class="flex flex-wrap gap-2 px-6 pt-5">
     <% Calculator::TRINITY_ALLOCATIONS.each do |a| %>
-      <button type="button" role="tab" data-scenario-tabs-target="tab" data-scenario="<%= a %>" data-action="scenario-tabs#select" aria-selected="false"
-              class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold transition-colors border-gray-300 text-[#6B7280] bg-[#FAFAFA]">
-        <span class="w-2.5 h-2.5 rounded-full" style="background-color: <%= scenario_color(a) %>"></span><%= Calculator.allocation_label(a) %>
+      <button type="button" role="tab" data-scenario-tabs-target="tab" data-scenario="<%= a %>" data-color="<%= scenario_color(a) %>" data-action="scenario-tabs#select" aria-selected="false"
+              class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors border-gray-300 text-[#6B7280] bg-[#FAFAFA]">
+        <span class="w-2.5 h-2.5 rounded-full" style="background-color: #D1D5DB"></span><%= Calculator.allocation_label(a) %>
       </button>
     <% end %>
   </div>

@@ -244,7 +244,8 @@ class CalculatorControllerTest < ActionDispatch::IntegrationTest
     assert_equal %w[100 75 50 25 0], series.keys
     assert_not_empty series["50"]["30"]
     assert_select "[data-horizon-chart-target='chip']", 5
-    assert_select "[data-horizon-chart-target='chip'][data-scenario='100'][disabled]"
+    assert_select "[data-horizon-chart-target='chip'][data-scenario='100']"
+    assert_select "[data-horizon-chart-target='chip'][disabled]", 0
   end
 
   test "index renders a health table per scenario" do

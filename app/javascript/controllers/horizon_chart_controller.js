@@ -1,5 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import { marketEventsPlugin } from "controllers/market_events"
+import { styleChip } from "controllers/scenario_chip"
 
 export default class extends Controller {
   static targets = ["canvas", "dropdown", "title", "scaleButton", "scaleNote", "chip"]
@@ -61,29 +62,37 @@ export default class extends Controller {
     try { stored = JSON.parse(localStorage.getItem(this.constructor.SCENARIOS_KEY)) } catch (e) {}
     const keys = this.scenarioKeys
     const chosen = Array.isArray(stored) ? stored.map(String) : this.constructor.DEFAULT_SCENARIOS
-    return keys.filter(key => key === "100" || chosen.includes(key))
+    const valid = keys.filter(key => chosen.includes(key))
+    return valid.length > 0 ? valid : keys.filter(key => this.constructor.DEFAULT_SCENARIOS.includes(key))
   }
 
   toggleScenario(event) {
     const key = event.currentTarget.dataset.scenario
-    if (key === "100") return
     const selected = new Set(this.selected)
-    if (selected.has(key)) selected.delete(key)
-    else selected.add(key)
+    if (selected.has(key)) {
+      if (selected.size === 1) return
+      selected.delete(key)
+    } else {
+      selected.add(key)
+    }
     const next = this.scenarioKeys.filter(k => selected.has(k))
     try { localStorage.setItem(this.constructor.SCENARIOS_KEY, JSON.stringify(next)) } catch (e) {}
     this.renderChart()
   }
 
   updateChipControls(selected) {
+    const last = selected.length === 1 ? selected[0] : null
     this.chipTargets.forEach((chip) => {
       const on = selected.includes(chip.dataset.scenario)
-      const scenario = this.scenariosValue.find(s => String(s.key) === chip.dataset.scenario)
       chip.setAttribute("aria-pressed", String(on))
-      chip.classList.toggle("bg-white", on)
-      chip.classList.toggle("shadow-sm", on)
-      chip.style.borderColor = on ? scenario.color : ""
-      chip.style.color = on ? scenario.color : ""
+      styleChip(chip, chip.dataset.color, on)
+      if (chip.dataset.scenario === last) {
+        chip.setAttribute("aria-disabled", "true")
+        chip.title = "At least one portfolio must be shown"
+      } else {
+        chip.removeAttribute("aria-disabled")
+        chip.removeAttribute("title")
+      }
     })
     this.canvasTarget.dataset.renderedScenarios = selected.join(",")
   }
@@ -137,7 +146,7 @@ export default class extends Controller {
       const byYear = new Map(seriesFor(String(scenario.key)).map(d => [d.year, d.value]))
       return labels.map(year => byYear.has(year) ? byYear.get(year) : null)
     })
-    const values = rawByScenario[0]
+    const values = labels.map(year => valueByYear.has(year) ? valueByYear.get(year) : null)
     const naIndex = values.findIndex((v, i) => v === null && values.slice(i).every(rest => rest === null))
     this.canvasTarget.dataset.naFrom = naIndex === -1 ? "" : labels[naIndex]
     const events = this.eventsValue.filter(e => labels.includes(e.year))
@@ -159,20 +168,19 @@ export default class extends Controller {
     this.updateScaleControls(scale)
 
     const referenceLineData = values.map(v => v === null ? null : initialAmount)
-    const lineDataset = (scenario, raw, index) => ({
+    const lineDataset = (scenario, raw) => ({
       label: scenario.label,
       data: plot(raw),
       borderColor: scenario.color,
       backgroundColor: scenario.color,
-      borderWidth: index === 0 ? 3 : 2,
+      borderWidth: scenario.key === 100 ? 3 : 2,
       fill: false,
       tension: 0.3,
       cubicInterpolationMode: 'monotone',
       pointRadius: 0,
-      pointHoverRadius: index === 0 ? 6 : 5,
+      pointHoverRadius: scenario.key === 100 ? 6 : 5,
       pointHoverBackgroundColor: scenario.color
     })
-    const sp500 = { ...lineDataset(scenarios[0], values, 0), backgroundColor: 'rgba(107, 114, 128, 0.08)', fill: 'start' }
     const referenceLine = {
       label: `Initial Amount (${this.formatCurrency(initialAmount)})`,
       data: referenceLineData,
@@ -184,11 +192,12 @@ export default class extends Controller {
       fill: false
     }
     const datasets = [
-      sp500,
       referenceLine,
-      ...scenarios.slice(1).map((scenario, i) => lineDataset(scenario, rawByScenario[i + 1], i + 1))
+      ...scenarios.map((scenario, i) => scenario.key === 100
+        ? { ...lineDataset(scenario, rawByScenario[i]), backgroundColor: 'rgba(107, 114, 128, 0.08)', fill: 'start' }
+        : lineDataset(scenario, rawByScenario[i]))
     ]
-    const seriesValues = [values, null, ...rawByScenario.slice(1)]
+    const seriesValues = [null, ...rawByScenario]
 
     this.chart = new this.Chart(ctx, {
       type: 'line',
@@ -223,7 +232,7 @@ export default class extends Controller {
             displayColors: false,
             filter: function(tooltipItem) {
               // Only show tooltip for the portfolios, not the reference line
-              return tooltipItem.datasetIndex !== 1
+              return tooltipItem.datasetIndex !== 0
             },
             callbacks: {
               title: function(context) {
