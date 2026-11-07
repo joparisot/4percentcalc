@@ -1,10 +1,10 @@
 <%# Trinity study comparison: the same scenario across its stock/bond mixes %>
 <section id="stocks-vs-bonds" class="w-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mt-8">
   <div class="px-6 py-5 border-b border-gray-200">
-    <h2 class="text-xl font-bold text-[#1F2937]">Stock/bond mixes from the Trinity study</h2>
+    <h2 class="text-xl font-bold text-[#1F2937]">Stock/bond mixes from the Trinity study, plus the Nasdaq</h2>
     <p class="text-sm text-[#6B7280] mt-1">
       The 1998 <a href="https://en.wikipedia.org/wiki/Trinity_study" target="_blank" rel="noopener noreferrer" class="text-[#7C3AED] font-medium hover:underline">Trinity study</a>
-      tested the 4% rule on these five stock/bond mixes, rebalanced every year. Same scenario, 30 years. Toggle any mix on the chart below to see it year by year.
+      tested the 4% rule on five stock/bond mixes, rebalanced every year. We added a 100% Nasdaq Composite row for comparison. Same scenario, 30 years. Toggle any row on the chart below to see it year by year.
     </p>
   </div>
   <div class="relative overflow-x-auto custom-scrollbar p-6">
@@ -18,29 +18,38 @@
         </tr>
       </thead>
       <tbody>
-        <% @allocation_rows.each do |row| %>
-          <% allocation = row[:allocation] %>
-          <% baseline = allocation == 100 %>
+        <% @scenario_rows.each do |row| %>
+          <% scenario = row[:scenario] %>
+          <% stats = row[:stats] %>
+          <% baseline = scenario == Scenario.default %>
           <tr class="border-b border-dashed border-gray-200 last:border-0"
-              data-allocation-row="<%= allocation %>">
+              data-scenario-row="<%= scenario.key %>">
             <td class="py-3 px-2">
               <div class="flex items-center gap-3">
-                <span class="w-3 h-3 rounded-full shrink-0" style="background-color: <%= scenario_color(allocation) %>"></span>
-                <span class="font-semibold text-[#1F2937]"><%= baseline ? "100% S&P 500" : "#{allocation}% stocks / #{100 - allocation}% bonds" %></span>
-                <span class="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-gray-100 text-[#6B7280]" data-trinity-tag>Trinity study</span>
+                <span class="w-3 h-3 rounded-full shrink-0" style="background-color: <%= scenario.color %>"></span>
+                <span class="flex flex-col">
+                  <span class="flex items-center gap-2">
+                    <span class="font-semibold text-[#1F2937]"><%= baseline || scenario.nasdaq? ? scenario.label : "#{scenario.stock_allocation}% stocks / #{100 - scenario.stock_allocation}% bonds" %></span>
+                    <% if scenario.trinity? %><span class="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-gray-100 text-[#6B7280]" data-trinity-tag>Trinity study</span><% end %>
+                  </span>
+                  <% if scenario.nasdaq? && stats %>
+                    <span class="text-xs text-[#6B7280]">Since <%= scenario.first_year %>, <%= stats[:total_periods] %> thirty-year start years vs. <%= @scenario_rows.first[:stats][:total_periods] %> for the others</span>
+                  <% end %>
+                </span>
               </div>
             </td>
-            <td class="py-3 px-2 text-right font-bold text-[#1F2937]" data-allocation-success><%= row[:stats]&.dig(:success_rate) || 0 %>%</td>
+            <td class="py-3 px-2 text-right font-bold text-[#1F2937]" data-allocation-success><%= stats&.dig(:success_rate) || 0 %>%</td>
             <td class="py-3 px-2 text-right text-[#1F2937]">
-              <% if (worst = row[:stats]&.dig(:worst_year)) %>
-                <%= link_to worst, year_detail_path(worst, year_detail_scenario_params(initial_amount: @initial_amount, withdrawal_rate: @withdrawal_rate, fee: @fee, stock_allocation: (allocation unless baseline))), class: "hover:text-[#7C3AED] hover:underline", data: { turbo_frame: "_top" } %>
+              <% if (worst = stats&.dig(:worst_year)) %>
+                <%= link_to worst, year_detail_path(worst, year_detail_scenario_params(initial_amount: @initial_amount, withdrawal_rate: @withdrawal_rate, fee: @fee, scenario: (scenario unless baseline))), class: "hover:text-[#7C3AED] hover:underline", data: { turbo_frame: "_top" } %>
               <% else %>N/A<% end %>
             </td>
-            <td class="py-3 px-2 text-right text-[#1F2937]"><%= format_currency(row[:stats]&.dig(:median_final_value)) %></td>
+            <td class="py-3 px-2 text-right text-[#1F2937]"><%= format_currency(stats&.dig(:median_final_value)) %></td>
           </tr>
         <% end %>
       </tbody>
     </table>
     <p class="mt-4 text-xs text-[#6B7280]">Bonds are 10-year U.S. Treasuries (the Trinity study used high-grade corporate bonds). Success rate is the share of start years whose money lasted 30 years; median value is the 30-year balance.</p>
+    <p class="mt-2 text-xs text-[#6B7280]">The Nasdaq row covers 1972 onward only (the index launched in 1971), so its success rate is not directly comparable with the rows above, which start in 1926. QQQ tracks the Nasdaq-100 (since 1985), which behaves very similarly.</p>
   </div>
 </section>

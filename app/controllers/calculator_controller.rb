@@ -27,7 +27,8 @@ class CalculatorController < ApplicationController
     @withdrawal_rate = params[:withdrawal_rate]&.to_f || 4.0
     @fee = parse_fee
 
-    @comparison_allocation = Calculator.comparison_allocation(params[:stock_allocation])
+    requested = Scenario.from_param(params[:scenario]) || Scenario.from_param(params[:stock_allocation])
+    @comparison = (requested unless requested == Scenario.default) || Scenario.default_comparison
     @calculator = calculator = Calculator.new
     years = calculator.available_years
     raise ActionController::RoutingError, "No data for #{params[:year]}" unless years.include?(@starting_year)
@@ -53,7 +54,7 @@ class CalculatorController < ApplicationController
       market_data: calculator.data_by_year,
       rank: rank
     )
-    @scenario_params = request.query_parameters.slice("initial_amount", "withdrawal_rate", "fee", "stock_allocation")
+    @scenario_params = request.query_parameters.slice("initial_amount", "withdrawal_rate", "fee", "scenario", "stock_allocation")
     @previous_year = years.select { |y| y < @starting_year }.max
     @next_year = years.select { |y| y > @starting_year }.min
     if @summary.depleted?
@@ -62,7 +63,7 @@ class CalculatorController < ApplicationController
 
     # Build year-by-year data for chart
     @chart_data = build_chart_data(@starting_year, @initial_amount, @withdrawal_rate, @fee)
-    @comparison_chart_data = build_chart_data(@starting_year, @initial_amount, @withdrawal_rate, @fee, stock_allocation: @comparison_allocation)
+    @comparison_chart_data = build_chart_data(@starting_year, @initial_amount, @withdrawal_rate, @fee, scenario: @comparison)
 
     respond_to do |format|
       format.html
@@ -109,16 +110,16 @@ class CalculatorController < ApplicationController
     )
     @stats = @calculator.summary_stats(results, horizon: 30)
 
-    results_by_allocation = Calculator::TRINITY_ALLOCATIONS.index_with do |allocation|
-      next results if allocation == 100
+    results_by_scenario = Scenario::ALL.index_by(&:key).transform_values do |scenario|
+      next results if scenario == Scenario.default
 
-      @calculator.backtest_all(initial_amount: @initial_amount, withdrawal_rate: @withdrawal_rate, stock_allocation: allocation, fee: @fee)
+      @calculator.backtest_all(initial_amount: @initial_amount, withdrawal_rate: @withdrawal_rate, scenario: scenario, fee: @fee)
     end
-    @allocation_rows = results_by_allocation.map do |allocation, allocation_results|
-      { allocation: allocation, label: Calculator.allocation_label(allocation), stats: @calculator.summary_stats(allocation_results, horizon: 30) }
+    @scenario_rows = Scenario::ALL.map do |scenario|
+      { scenario: scenario, stats: @calculator.summary_stats(results_by_scenario[scenario.key], horizon: 30) }
     end
-    @results_by_allocation = results_by_allocation
-    @horizon_series = results_by_allocation.transform_values { |allocation_results| build_horizon_chart_data(allocation_results) }
+    @results_by_scenario = results_by_scenario
+    @horizon_series = results_by_scenario.transform_values { |scenario_results| build_horizon_chart_data(scenario_results) }
   end
 
   # Figures quoted in the homepage FAQ, always for a $1M portfolio regardless of the
@@ -155,7 +156,7 @@ class CalculatorController < ApplicationController
     end
   end
 
-  def build_chart_data(starting_year, initial_amount, withdrawal_rate, fee = 0, stock_allocation: 100)
+  def build_chart_data(starting_year, initial_amount, withdrawal_rate, fee = 0, scenario: Scenario.default)
     data_by_year = @calculator.data_by_year
 
     portfolio = initial_amount.to_f
@@ -169,10 +170,13 @@ class CalculatorController < ApplicationController
 
       break unless year_data
 
+      scenario_return = scenario.annual_return(year_data)
+      break if scenario_return.nil?
+
       portfolio -= annual_withdrawal
       break if portfolio <= 0
 
-      portfolio *= (1 + @calculator.annual_return(year_data, stock_allocation))
+      portfolio *= (1 + scenario_return)
       portfolio *= (1 - fee.to_f / 100)
       chart_points << { year: year_offset + 1, value: portfolio.round(0) }
 

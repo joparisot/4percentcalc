@@ -15,7 +15,7 @@ export default class extends Controller {
   static SCALE_KEY = "horizonChartScale"
   static SCALES = ["linear", "logarithmic"]
   static SCENARIOS_KEY = "horizonChartScenarios"
-  static DEFAULT_SCENARIOS = ["100", "50"]
+  static DEFAULT_SCENARIOS = ["sp500", "sp50"]
 
   async connect() {
     // Dynamically import Chart.js
@@ -133,12 +133,12 @@ export default class extends Controller {
     const selected = this.selected
     this.updateChipControls(selected)
     const seriesFor = (key) => this.seriesValue[key]?.[this.horizonValue] || []
-    const horizonData = seriesFor("100")
+    const horizonData = seriesFor("sp500")
 
     if (horizonData.length === 0) return
 
     // Every horizon shares the x-axis of the shortest one; later start years don't have enough history yet.
-    const allYears = (this.seriesValue["100"]?.[10] || horizonData).map(d => d.year)
+    const allYears = (this.seriesValue["sp500"]?.[10] || horizonData).map(d => d.year)
     const valueByYear = new Map(horizonData.map(d => [d.year, d.value]))
     const labels = [...new Set([...allYears, ...valueByYear.keys()])].sort((a, b) => a - b)
     const scenarios = this.scenariosValue.filter(scenario => selected.includes(String(scenario.key)))
@@ -168,12 +168,12 @@ export default class extends Controller {
       data: plot(raw),
       borderColor: scenario.color,
       backgroundColor: scenario.color,
-      borderWidth: scenario.key === 100 ? 3 : 2,
+      borderWidth: scenario.key === "sp500" ? 3 : 2,
       fill: false,
       tension: 0.3,
       cubicInterpolationMode: 'monotone',
       pointRadius: 0,
-      pointHoverRadius: scenario.key === 100 ? 6 : 5,
+      pointHoverRadius: scenario.key === "sp500" ? 6 : 5,
       pointHoverBackgroundColor: scenario.color
     })
     const referenceLine = {
@@ -188,7 +188,7 @@ export default class extends Controller {
     }
     const datasets = [
       referenceLine,
-      ...scenarios.map((scenario, i) => scenario.key === 100
+      ...scenarios.map((scenario, i) => scenario.key === "sp500"
         ? { ...lineDataset(scenario, rawByScenario[i]), backgroundColor: 'rgba(107, 114, 128, 0.08)', fill: 'start' }
         : lineDataset(scenario, rawByScenario[i]))
     ]

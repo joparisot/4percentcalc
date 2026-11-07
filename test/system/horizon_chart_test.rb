@@ -159,25 +159,29 @@ class HorizonChartTest < ActionDispatch::SystemTestCase
     visit root_path
     canvas = "canvas[data-horizon-chart-target='canvas']"
     chip = ->(key) { find("[data-horizon-chart-target='chip'][data-scenario='#{key}']") }
-    assert_selector "#{canvas}[width][data-rendered-scenarios='100,50']", wait: 3
+    assert_selector "#{canvas}[width][data-rendered-scenarios='sp500,sp50']", wait: 3
     assert_equal ["100% S&P 500", "50/50 stocks/bonds"], chart_dataset_labels.drop(1)
 
-    chip.call(75).click
-    assert_selector "#{canvas}[data-rendered-scenarios='100,75,50']"
+    chip.call('sp75').click
+    assert_selector "#{canvas}[data-rendered-scenarios='sp500,sp75,sp50']"
     assert_equal ["100% S&P 500", "75/25 stocks/bonds", "50/50 stocks/bonds"], chart_dataset_labels.drop(1)
 
-    chip.call(100).click
-    assert_selector "#{canvas}[data-rendered-scenarios='75,50']"
+    chip.call('sp500').click
+    assert_selector "#{canvas}[data-rendered-scenarios='sp75,sp50']"
     assert_equal ["75/25 stocks/bonds", "50/50 stocks/bonds"], chart_dataset_labels.drop(1)
 
-    chip.call(50).click
-    assert_selector "#{canvas}[data-rendered-scenarios='75']"
-    assert_selector "[data-horizon-chart-target='chip'][data-scenario='75'][aria-disabled='true']"
-    chip.call(75).click
-    assert_selector "#{canvas}[data-rendered-scenarios='75']"
+    chip.call('sp50').click
+    assert_selector "#{canvas}[data-rendered-scenarios='sp75']"
+    assert_selector "[data-horizon-chart-target='chip'][data-scenario='sp75'][aria-disabled='true']"
+    chip.call('sp75').click
+    assert_selector "#{canvas}[data-rendered-scenarios='sp75']"
 
     select "20 years", from: "horizon-select"
-    assert_selector "#{canvas}[data-rendered-scenarios='75']"
+    assert_selector "#{canvas}[data-rendered-scenarios='sp75']"
+
+    chip.call("nasdaq").click
+    assert_selector "#{canvas}[data-rendered-scenarios='sp75,nasdaq']"
+    assert_includes chart_dataset_labels, "100% Nasdaq Composite"
   ensure
     page.execute_script("localStorage.clear()")
   end

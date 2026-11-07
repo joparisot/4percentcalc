@@ -6,7 +6,7 @@ export default class extends Controller {
   static targets = ["tab", "panel", "subtitle"]
 
   static SCENARIOS_KEY = "healthTableScenario"
-  static DEFAULT_SCENARIO = "100"
+  static DEFAULT_SCENARIO = "sp500"
 
   connect() {
     this.show(this.stored)

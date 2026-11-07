@@ -7,6 +7,7 @@ export default class extends Controller {
     data: Array,
     comparison: Array,
     comparisonLabel: String,
+    comparisonColor: { type: String, default: '#2563EB' },
     events: { type: Array, default: [] },
     startingYear: Number
   }
@@ -61,15 +62,15 @@ export default class extends Controller {
         }, {
           label: this.comparisonLabelValue,
           data: comparisonValues,
-          borderColor: '#2563EB',
-          backgroundColor: '#2563EB',
+          borderColor: this.comparisonColorValue,
+          backgroundColor: this.comparisonColorValue,
           borderWidth: 2,
           fill: false,
           tension: 0.3,
           cubicInterpolationMode: 'monotone',
           pointRadius: 0,
           pointHoverRadius: 5,
-          pointHoverBackgroundColor: '#2563EB'
+          pointHoverBackgroundColor: this.comparisonColorValue
         }]
       },
       options: {
