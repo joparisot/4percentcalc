@@ -78,7 +78,7 @@
               <%# No name: the slider carries withdrawal_rate; this box commits into it on Enter or blur. %>
               <input type="text" inputmode="decimal" autocomplete="off" id="withdrawal-rate-input"
                      value="<%= format_rate(@withdrawal_rate) %>"
-                     class="w-12 bg-transparent text-right text-lg font-bold text-[#7C3AED] focus:outline-none"
+                     class="w-10 bg-transparent text-right text-lg font-bold text-[#7C3AED] focus:outline-none"
                      data-calculator-target="rateDisplay"
                      data-action="change->calculator#commitRate keydown.enter->calculator#commitRateOnEnter keydown.esc->calculator#revertRate" />
               <span class="text-[#6B7280] font-medium ml-1">%</span>
