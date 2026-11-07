@@ -1,22 +1,5 @@
 class Calculator
   MILESTONES = [10, 20, 30, 40, 50].freeze
-  # Stock/bond splits from the Trinity study, as the percentage held in stocks.
-  TRINITY_ALLOCATIONS = [100, 75, 50, 25, 0].freeze
-  DEFAULT_COMPARISON_ALLOCATION = 50
-
-  # Clamps a stock_allocation param to one of the Trinity study's mixes.
-  def self.comparison_allocation(value)
-    allocation = value.presence&.to_i
-    (TRINITY_ALLOCATIONS - [100]).include?(allocation) ? allocation : DEFAULT_COMPARISON_ALLOCATION
-  end
-
-  def self.allocation_label(stock_allocation)
-    return "100% S&P 500" if stock_allocation == 100
-    return "100% bonds" if stock_allocation == 0
-
-    "#{stock_allocation}/#{100 - stock_allocation} stocks/bonds"
-  end
-
   attr_reader :data_by_year
 
   # Portfolio needed so that year one's withdrawal covers annual_spending.
@@ -36,12 +19,12 @@ class Calculator
 
   # Run backtest for a single starting year
   # Returns hash with portfolio values at milestones
-  # stock_allocation is the % in the S&P 500; the rest is in 10-year Treasuries, rebalanced every year.
-  def backtest(initial_amount:, withdrawal_rate:, starting_year:, stock_allocation: 100, fee: 0)
+  # Trinity scenarios hold stocks and 10-year Treasuries, rebalanced every year; the Nasdaq scenario is 100% Nasdaq Composite.
+  def backtest(initial_amount:, withdrawal_rate:, starting_year:, scenario: Scenario.default, fee: 0)
     portfolio = initial_amount.to_f
     annual_withdrawal = initial_amount.to_f * (withdrawal_rate.to_f / 100)
 
-    results = { starting_year: starting_year, stock_allocation: stock_allocation, milestones: {} }
+    results = { starting_year: starting_year, scenario: scenario.key, milestones: {} }
     depleted_at = nil
 
     (0...50).each do |year_offset|
@@ -50,6 +33,9 @@ class Calculator
 
       # If we don't have data for this year, stop
       break unless year_data
+
+      scenario_return = scenario.annual_return(year_data)
+      break if scenario_return.nil?
 
       # Withdraw at start of year
       portfolio -= annual_withdrawal
@@ -65,7 +51,7 @@ class Calculator
       end
 
       # Apply market return for this year
-      portfolio *= (1 + annual_return(year_data, stock_allocation))
+      portfolio *= (1 + scenario_return)
       # Annual fee (% of assets), charged on the end-of-year balance
       portfolio *= (1 - fee.to_f / 100)
 
@@ -84,16 +70,16 @@ class Calculator
   end
 
   # Run backtest for all starting years
-  def backtest_all(initial_amount:, withdrawal_rate:, stock_allocation: 100, fee: 0)
+  def backtest_all(initial_amount:, withdrawal_rate:, scenario: Scenario.default, fee: 0)
     # Only test years where we have at least 10 years of data
     max_start_year = available_years.last - (MILESTONES.min - 1)
 
-    available_years.select { |y| y <= max_start_year }.map do |year|
+    available_years.select { |y| y <= max_start_year && y >= (scenario.first_year || y) }.map do |year|
       backtest(
         initial_amount: initial_amount,
         withdrawal_rate: withdrawal_rate,
         starting_year: year,
-        stock_allocation: stock_allocation,
+        scenario: scenario,
         fee: fee
       )
     end
@@ -118,15 +104,11 @@ class Calculator
     }
   end
 
-  def annual_return(year_data, stock_allocation)
-    stocks = stock_allocation / 100.0
-    stocks * year_data["sp500_return"] + (1 - stocks) * year_data["bond_return"]
-  end
-
   private
 
   def load_data
     json_path = Rails.root.join('lib/data/shiller_data.json')
-    JSON.parse(File.read(json_path))
+    nasdaq = JSON.parse(File.read(Rails.root.join('lib/data/nasdaq_returns.json')))["returns"]
+    JSON.parse(File.read(json_path)).each { |year_data| year_data["nasdaq_return"] = nasdaq[year_data["year"].to_s] }
   end
 end

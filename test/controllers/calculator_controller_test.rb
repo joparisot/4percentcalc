@@ -231,7 +231,7 @@ class CalculatorControllerTest < ActionDispatch::IntegrationTest
 
   test "index renders every Trinity mix with a Trinity tag and no compare button" do
     get root_path
-    assert_select "#stocks-vs-bonds tr[data-allocation-row]", 5
+    assert_select "#stocks-vs-bonds tr[data-scenario-row]", 6
     assert_select "#stocks-vs-bonds [data-trinity-tag]", 5
     assert_select "#stocks-vs-bonds button", 0
     assert_select "input#stock_allocation_hidden", 0
@@ -241,19 +241,22 @@ class CalculatorControllerTest < ActionDispatch::IntegrationTest
     get root_path
     attribute = css_select("[data-horizon-chart-series-value]").first["data-horizon-chart-series-value"]
     series = JSON.parse(attribute)
-    assert_equal %w[100 75 50 25 0], series.keys
-    assert_not_empty series["50"]["30"]
-    assert_select "[data-horizon-chart-target='chip']", 5
-    assert_select "[data-horizon-chart-target='chip'][data-scenario='100']"
+    assert_equal %w[sp500 sp75 sp50 sp25 bonds nasdaq], series.keys
+    assert_not_empty series["sp50"]["30"]
+    assert_equal 1972, series["nasdaq"]["30"].first["year"]
+    assert_select "[data-horizon-chart-target='chip']", 6
+    assert_select "[data-horizon-chart-target='chip'][data-scenario='sp500']"
     assert_select "[data-horizon-chart-target='chip'][disabled]", 0
   end
 
   test "index renders a health table per scenario" do
     get root_path
-    assert_select "#start-years [data-scenario-tabs-target='panel']", 5
-    assert_select "#start-years [role='tab']", 5
-    assert_select "#start-years [data-scenario='75'] a[href*='stock_allocation=75']"
-    assert_select "#start-years [data-scenario='100'] a[href*='stock_allocation']", 0
+    assert_select "#start-years [data-scenario-tabs-target='panel']", 6
+    assert_select "#start-years [role='tab']", 6
+    assert_select "#start-years table[data-scenario='sp75'] a[href*='scenario=sp75']"
+    assert_select "#start-years table[data-scenario='sp500'] a[href*='scenario']", 0
+    assert_select "#start-years table[data-scenario='nasdaq'] a[href^='/year_detail/1971']", 0
+    assert_select "#start-years table[data-scenario='nasdaq'] a[href^='/year_detail/1972']"
   end
 
   test "year_detail charts the comparison mix next to the S&P 500" do
@@ -262,8 +265,15 @@ class CalculatorControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-chart-comparison-label-value='25/75 stocks/bonds']"
   end
 
+  test "year_detail can compare against the Nasdaq" do
+    get year_detail_path(year: 2000), params: { scenario: "nasdaq" }
+    assert_response :success
+    assert_select "[data-chart-comparison-label-value='100% Nasdaq Composite']"
+    assert_select "[data-chart-comparison-color-value='#EC4899']"
+  end
+
   test "comparison table worst-year links leave the calculator turbo frame" do
     get root_path
-    assert_select "[data-allocation-row] a[href^='/year_detail'][data-turbo-frame='_top']"
+    assert_select "[data-scenario-row] a[href^='/year_detail'][data-turbo-frame='_top']"
   end
 end

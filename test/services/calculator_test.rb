@@ -148,31 +148,48 @@ class CalculatorTest < ActiveSupport::TestCase
 
   test "stock allocation blends S&P 500 and bond returns" do
     year = @calculator.data_by_year[2008]
-    assert_in_delta year["sp500_return"], @calculator.annual_return(year, 100), 1e-9
-    assert_in_delta year["bond_return"], @calculator.annual_return(year, 0), 1e-9
-    assert_in_delta (year["sp500_return"] + year["bond_return"]) / 2, @calculator.annual_return(year, 50), 1e-9
+    assert_in_delta year["sp500_return"], Scenario.find("sp500").annual_return(year), 1e-9
+    assert_in_delta year["bond_return"], Scenario.find("bonds").annual_return(year), 1e-9
+    assert_in_delta (year["sp500_return"] + year["bond_return"]) / 2, Scenario.find("sp50").annual_return(year), 1e-9
   end
 
   test "default backtest is 100% stocks" do
     default = @calculator.backtest(initial_amount: 1_000_000, withdrawal_rate: 4, starting_year: 1966)
-    stocks = @calculator.backtest(initial_amount: 1_000_000, withdrawal_rate: 4, starting_year: 1966, stock_allocation: 100)
+    stocks = @calculator.backtest(initial_amount: 1_000_000, withdrawal_rate: 4, starting_year: 1966, scenario: Scenario.find("sp500"))
     assert_equal stocks, default
   end
 
   test "trinity mixes at 4% over 30 years" do
-    rates = Calculator::TRINITY_ALLOCATIONS.index_with do |allocation|
-      results = @calculator.backtest_all(initial_amount: 1_000_000, withdrawal_rate: 4, stock_allocation: allocation)
+    rates = Scenario::ALL.select(&:trinity?).index_by(&:key).transform_values do |scenario|
+      results = @calculator.backtest_all(initial_amount: 1_000_000, withdrawal_rate: 4, scenario: scenario)
       @calculator.summary_stats(results, horizon: 30)[:success_rate]
     end
-    assert_equal 94.4, rates[100]
-    assert rates[50] > rates[0], "A 50/50 mix should beat all bonds"
-    assert rates[0] < 50, "All bonds should fail most 30-year retirements at 4%"
+    assert_equal 94.4, rates["sp500"]
+    assert rates["sp50"] > rates["bonds"], "A 50/50 mix should beat all bonds"
+    assert rates["bonds"] < 50, "All bonds should fail most 30-year retirements at 4%"
   end
 
-  test "comparison allocation falls back to 50/50" do
-    assert_equal 75, Calculator.comparison_allocation("75")
-    assert_equal 50, Calculator.comparison_allocation(nil)
-    assert_equal 50, Calculator.comparison_allocation("100")
-    assert_equal 50, Calculator.comparison_allocation("33")
+  test "nasdaq backtest for a 2000 start runs out of money" do
+    result = @calculator.backtest(initial_amount: 1_000_000, withdrawal_rate: 4.0, starting_year: 2000, scenario: Scenario.find("nasdaq"))
+    assert result[:depleted_at]
+    assert_operator result[:depleted_at], :<, 15
+    assert_operator result[:milestones][10], :>, 100_000
+    assert_operator result[:milestones][10], :<, 200_000
+  end
+
+  test "nasdaq backtests start in 1972" do
+    results = @calculator.backtest_all(initial_amount: 1_000_000, withdrawal_rate: 4.0, scenario: Scenario.find("nasdaq"))
+    assert_equal 1972, results.first[:starting_year]
+  end
+
+  test "scenario annual_return is nil without data" do
+    assert_nil Scenario.find("nasdaq").annual_return({ "year" => 1950, "sp500_return" => 0.1, "bond_return" => 0.02 })
+  end
+
+  test "scenario from_param accepts keys and legacy allocations" do
+    assert_equal "sp75", Scenario.from_param("75").key
+    assert_equal "nasdaq", Scenario.from_param("nasdaq").key
+    assert_nil Scenario.from_param("garbage")
+    assert_nil Scenario.from_param(nil)
   end
 end

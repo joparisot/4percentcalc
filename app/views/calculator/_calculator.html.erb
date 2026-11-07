@@ -189,7 +189,7 @@
 <section class="w-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mt-8"
          data-controller="horizon-chart"
          data-horizon-chart-series-value="<%= @horizon_series.to_json %>"
-         data-horizon-chart-scenarios-value="<%= Calculator::TRINITY_ALLOCATIONS.map { |a| { key: a, label: Calculator.allocation_label(a), color: scenario_color(a) } }.to_json %>"
+         data-horizon-chart-scenarios-value="<%= Scenario::ALL.map { |scenario| { key: scenario.key, label: scenario.label, color: scenario.color } }.to_json %>"
          data-horizon-chart-events-value="<%= MarketEvents.all.to_json %>"
          data-horizon-chart-initial-amount-value="<%= @initial_amount %>"
          data-horizon-chart-horizon-value="<%= @horizon %>">
@@ -229,15 +229,15 @@
   </div>
   <div class="p-6">
     <div class="flex flex-wrap gap-2 mb-4" role="group" aria-label="Portfolios shown" data-horizon-chart-target="chips">
-      <% Calculator::TRINITY_ALLOCATIONS.each do |a| %>
+      <% Scenario::ALL.each do |scenario| %>
         <button type="button"
                 data-horizon-chart-target="chip"
-                data-scenario="<%= a %>"
+                data-scenario="<%= scenario.key %>"
                 data-action="horizon-chart#toggleScenario"
                 aria-pressed="false"
-                data-color="<%= scenario_color(a) %>"
+                data-color="<%= scenario.color %>"
                 class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors border-gray-300 text-[#6B7280] bg-[#FAFAFA]">
-          <span class="w-2.5 h-2.5 rounded-full" style="background-color: #D1D5DB"></span><%= Calculator.allocation_label(a) %>
+          <span class="w-2.5 h-2.5 rounded-full" style="background-color: #D1D5DB"></span><%= scenario.label %>
         </button>
       <% end %>
     </div>
@@ -258,7 +258,7 @@
   <div class="px-6 py-5 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
       <h2 class="text-xl font-bold text-[#1F2937]">Historical Portfolio Health</h2>
-      <p class="text-sm text-[#6B7280] mt-1" data-scenario-tabs-target="subtitle"><%= Calculator.allocation_label(100) %> portfolio value at each milestone, adjusted for inflation-indexed withdrawals</p>
+      <p class="text-sm text-[#6B7280] mt-1" data-scenario-tabs-target="subtitle"><%= Scenario.default.label %> portfolio value at each milestone, adjusted for inflation-indexed withdrawals</p>
     </div>
     <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-medium whitespace-nowrap" data-heatmap-legend>
       <div class="flex items-center gap-2">
@@ -285,17 +285,17 @@
   </div>
 
   <div role="tablist" class="flex flex-wrap gap-2 px-6 pt-5">
-    <% Calculator::TRINITY_ALLOCATIONS.each do |a| %>
-      <button type="button" role="tab" data-scenario-tabs-target="tab" data-scenario="<%= a %>" data-color="<%= scenario_color(a) %>" data-action="scenario-tabs#select" aria-selected="false"
+    <% Scenario::ALL.each do |scenario| %>
+      <button type="button" role="tab" data-scenario-tabs-target="tab" data-scenario="<%= scenario.key %>" data-color="<%= scenario.color %>" data-action="scenario-tabs#select" aria-selected="false"
               class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors border-gray-300 text-[#6B7280] bg-[#FAFAFA]">
-        <span class="w-2.5 h-2.5 rounded-full" style="background-color: #D1D5DB"></span><%= Calculator.allocation_label(a) %>
+        <span class="w-2.5 h-2.5 rounded-full" style="background-color: #D1D5DB"></span><%= scenario.label %>
       </button>
     <% end %>
   </div>
 
   <div class="overflow-x-auto custom-scrollbar p-6">
-    <% Calculator::TRINITY_ALLOCATIONS.each do |a| %>
-      <table class="w-full min-w-[700px] hidden" data-scenario-tabs-target="panel" data-scenario="<%= a %>" data-label="<%= Calculator.allocation_label(a) %>">
+    <% Scenario::ALL.each do |scenario| %>
+      <table class="w-full min-w-[700px] hidden" data-scenario-tabs-target="panel" data-scenario="<%= scenario.key %>" data-label="<%= scenario.label %>">
         <thead>
           <tr class="text-xs font-bold uppercase tracking-wider text-[#6B7280]">
             <th class="text-left py-2 px-2 w-24">Start Year</th>
@@ -308,8 +308,8 @@
           </tr>
         </thead>
         <tbody>
-          <% @results_by_allocation[a].reverse.each do |result| %>
-            <% detail_url = year_detail_path(result[:starting_year], year_detail_scenario_params(initial_amount: @initial_amount, withdrawal_rate: @withdrawal_rate, fee: @fee, stock_allocation: (a unless a == 100))) %>
+          <% @results_by_scenario[scenario.key].reverse.each do |result| %>
+            <% detail_url = year_detail_path(result[:starting_year], year_detail_scenario_params(initial_amount: @initial_amount, withdrawal_rate: @withdrawal_rate, fee: @fee, scenario: (scenario unless [Scenario.default, Scenario.default_comparison].include?(scenario)))) %>
             <tr class="group border-b border-dashed border-gray-200 last:border-0 hover:bg-[#EDE9FE] cursor-pointer transition-colors"
                 onclick="window.location='<%= detail_url %>'">
               <td class="py-3 px-2 font-semibold">
