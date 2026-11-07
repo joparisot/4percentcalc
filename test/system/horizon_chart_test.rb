@@ -133,12 +133,12 @@ class HorizonChartTest < ActionDispatch::SystemTestCase
     assert_selector "#{canvas}[data-na-from='']"
   end
 
-  test "legend explains the line colours relative to the starting amount" do
+  test "legend explains the red band and depleted markers" do
     visit root_path
     within "[data-horizon-legend]" do
       assert_text "Below the starting amount"
-      assert_text "1–4× the starting amount"
-      assert_text "More than 4× the starting amount"
+      assert_text "Ran out of money"
+      refute_text "1–4×"
     end
   end
 
@@ -154,17 +154,31 @@ class HorizonChartTest < ActionDispatch::SystemTestCase
   end
 
 
-  test "chart overlays the chosen Trinity mix and the compare button switches it" do
+  test "scenario chips add and remove lines without reloading" do
     visit root_path
-    assert_selector "canvas[data-horizon-chart-target='canvas'][width]", wait: 3
+    page.execute_script("localStorage.clear()")
+    visit root_path
+    canvas = "canvas[data-horizon-chart-target='canvas']"
+    assert_selector "#{canvas}[width][data-rendered-scenarios='100,50']", wait: 3
     assert_equal ["100% S&P 500", "50/50 stocks/bonds"], chart_dataset_labels.values_at(0, 2)
 
-    within("tr[data-allocation-row='75']") { click_button "Compare" }
-    assert_selector "tr[data-allocation-row='75'][data-selected]"
-    assert_selector "[data-comparison-legend]", text: "75/25 stocks/bonds"
-    assert_selector "canvas[data-horizon-chart-target='canvas'][width]", wait: 3
-    assert_equal ["100% S&P 500", "75/25 stocks/bonds"], chart_dataset_labels.values_at(0, 2)
-    assert_equal "75", find("#stock_allocation_hidden", visible: false).value
+    find("[data-horizon-chart-target='chip'][data-scenario='75']").click
+    assert_selector "#{canvas}[data-rendered-scenarios='100,75,50']"
+    assert_equal ["100% S&P 500", "75/25 stocks/bonds", "50/50 stocks/bonds"], chart_dataset_labels.values_at(0, 2, 3)
+
+    find("[data-horizon-chart-target='chip'][data-scenario='50']").click
+    assert_selector "#{canvas}[data-rendered-scenarios='100,75']"
+    assert_selector "[data-horizon-chart-target='chip'][data-scenario='100'][disabled]"
+
+    select "20 years", from: "horizon-select"
+    assert_selector "#{canvas}[data-rendered-scenarios='100,75']"
+  ensure
+    page.execute_script("localStorage.clear()")
+  end
+
+  test "depleted start years are marked on the chart" do
+    visit root_path
+    assert_selector "canvas[data-horizon-chart-target='canvas'][data-depleted-years*='1966']", wait: 3
   end
 
   private

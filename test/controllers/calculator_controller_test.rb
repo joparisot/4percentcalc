@@ -229,18 +229,30 @@ class CalculatorControllerTest < ActionDispatch::IntegrationTest
   end
 
 
-  test "index compares the S&P 500 with every Trinity study mix" do
+  test "index renders every Trinity mix with a Trinity tag and no compare button" do
     get root_path
     assert_select "#stocks-vs-bonds tr[data-allocation-row]", 5
-    assert_select "tr[data-allocation-row='50'][data-selected]"
-    assert_select "input#stock_allocation_hidden[value='50']"
-    assert_select "[data-horizon-chart-comparison-label-value='50/50 stocks/bonds']"
+    assert_select "#stocks-vs-bonds [data-trinity-tag]", 5
+    assert_select "#stocks-vs-bonds button", 0
+    assert_select "input#stock_allocation_hidden", 0
   end
 
-  test "index uses the chosen comparison mix" do
-    get root_path, params: { stock_allocation: 75 }
-    assert_select "tr[data-allocation-row='75'][data-selected]"
-    assert_select "[data-horizon-chart-comparison-label-value='75/25 stocks/bonds']"
+  test "index passes every scenario's horizon series to the chart" do
+    get root_path
+    attribute = css_select("[data-horizon-chart-series-value]").first["data-horizon-chart-series-value"]
+    series = JSON.parse(attribute)
+    assert_equal %w[100 75 50 25 0], series.keys
+    assert_not_empty series["50"]["30"]
+    assert_select "[data-horizon-chart-target='chip']", 5
+    assert_select "[data-horizon-chart-target='chip'][data-scenario='100'][disabled]"
+  end
+
+  test "index renders a health table per scenario" do
+    get root_path
+    assert_select "#start-years [data-scenario-tabs-target='panel']", 5
+    assert_select "#start-years [role='tab']", 5
+    assert_select "#start-years [data-scenario='75'] a[href*='stock_allocation=75']"
+    assert_select "#start-years [data-scenario='100'] a[href*='stock_allocation']", 0
   end
 
   test "year_detail charts the comparison mix next to the S&P 500" do

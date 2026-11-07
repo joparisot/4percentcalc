@@ -1,5 +1,8 @@
 module CalculatorHelper
   YEAR_PAGES_PUBLISHED_ON = "2026-01-25".freeze
+  SCENARIO_COLORS = { 100 => "#7C3AED", 75 => "#2563EB", 50 => "#0D9488", 25 => "#F59E0B", 0 => "#6B7280" }.freeze
+
+  def scenario_color(allocation) = SCENARIO_COLORS.fetch(allocation)
 
   def year_detail_structured_data(summary)
     page_url = year_detail_url(summary.year)
