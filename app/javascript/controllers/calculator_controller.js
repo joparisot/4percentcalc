@@ -3,6 +3,9 @@ import { Controller } from "@hotwired/stimulus"
 const AMOUNT_RANGE = { min: 1000, max: 100000000, step: 100000 }
 const SPENDING_RANGE = { min: 1000, max: 1000000, step: 5000 }
 
+// Set by submit() so the controller that connects with the re-rendered results updates the address bar.
+let syncUrlOnConnect = false
+
 export default class extends Controller {
   static targets = [
     "form", "rate", "rateDisplay", "amountDisplay", "amountHidden", "shareLabel",
@@ -11,14 +14,54 @@ export default class extends Controller {
 
   connect() {
     this.timeout = null
+    if (syncUrlOnConnect) {
+      syncUrlOnConnect = false
+      this.updateUrl()
+    }
+  }
+
+  // Dragging only previews; the slider's change event (on release or per key press) runs the
+  // backtest, so the results aren't re-rendered under the pointer mid-drag.
+  previewRate() {
+    if (this.hasRateDisplayTarget && this.hasRateTarget) {
+      this.rateDisplayTarget.value = this.formatRate(this.rateTarget.value)
+    }
+    this.updateRequiredPortfolio()
   }
 
   updateRate() {
+    this.previewRate()
+    this.submitNow()
+  }
+
+  commitRate() {
+    if (!this.hasRateDisplayTarget || !this.hasRateTarget) return
+
+    const typed = parseFloat(this.rateDisplayTarget.value.replace(',', '.').replace(/[^0-9.]/g, ''))
+    if (!Number.isFinite(typed)) return this.revertRate()
+
+    const slider = this.rateTarget
+    const rate = Math.min(Math.max(Math.round(typed * 10) / 10, parseFloat(slider.min)), parseFloat(slider.max))
+    const changed = rate !== parseFloat(slider.value)
+    slider.value = rate
+    this.previewRate()
+    if (changed) this.submitNow()
+  }
+
+  commitRateOnEnter(event) {
+    event.preventDefault()
+    this.commitRate()
+    event.target.blur()
+  }
+
+  revertRate() {
     if (this.hasRateDisplayTarget && this.hasRateTarget) {
-      this.rateDisplayTarget.textContent = this.rateTarget.value
+      this.rateDisplayTarget.value = this.formatRate(this.rateTarget.value)
     }
-    this.updateRequiredPortfolio()
-    this.debounceSubmit()
+  }
+
+  formatRate(value) {
+    return String(Math.round(parseFloat(value) * 10) / 10)
   }
 
   updateAmount() {
@@ -127,6 +170,12 @@ export default class extends Controller {
     return `${window.location.origin}${window.location.pathname}?${params.toString()}`
   }
 
+  // Keeps the address bar on the current scenario so reloading or copying it reopens it.
+  updateUrl() {
+    const url = new URL(this.shareUrl())
+    window.history.replaceState(window.history.state, '', url.pathname + url.search)
+  }
+
   copyLink() {
     const url = this.shareUrl()
 
@@ -160,8 +209,14 @@ export default class extends Controller {
     }, 500)
   }
 
+  submitNow() {
+    clearTimeout(this.timeout)
+    this.submit()
+  }
+
   submit() {
     if (this.hasFormTarget) {
+      syncUrlOnConnect = true
       this.formTarget.requestSubmit()
     }
   }

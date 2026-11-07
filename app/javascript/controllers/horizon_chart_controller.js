@@ -43,6 +43,7 @@ export default class extends Controller {
     if (hiddenField) {
       hiddenField.value = this.horizonValue
     }
+    this.dispatch("horizonChanged", { target: window })
   }
 
   setScale(event) {

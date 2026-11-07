@@ -1,5 +1,5 @@
 <%# Controls Section %>
-<section class="grid grid-cols-1 lg:grid-cols-12 gap-6" data-controller="calculator">
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-6" data-controller="calculator" data-action="horizon-chart:horizonChanged@window->calculator#updateUrl">
   <%# Input Card %>
   <div class="lg:col-span-5 flex flex-col gap-6 bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
     <h2 class="text-lg font-bold text-[#1F2937]">Portfolio Parameters</h2>
@@ -73,21 +73,26 @@
         <%# Withdrawal Rate Slider %>
         <div class="flex flex-col gap-4">
           <div class="flex justify-between items-end">
-            <span class="text-sm font-medium text-[#6B7280]">Annual Withdrawal Rate</span>
-            <div class="flex items-center bg-[#FAFAFA] border border-gray-300 rounded-lg px-3 py-1.5">
-              <span class="text-lg font-bold text-[#7C3AED]" data-calculator-target="rateDisplay"><%= @withdrawal_rate %></span>
+            <label for="withdrawal-rate-input" class="text-sm font-medium text-[#6B7280]">Annual Withdrawal Rate</label>
+            <div class="flex items-center bg-[#FAFAFA] border border-gray-300 rounded-lg px-3 py-1.5 focus-within:ring-2 focus-within:ring-[#7C3AED]/20 focus-within:border-[#7C3AED]">
+              <%# No name: the slider carries withdrawal_rate; this box commits into it on Enter or blur. %>
+              <input type="text" inputmode="decimal" autocomplete="off" id="withdrawal-rate-input"
+                     value="<%= format_rate(@withdrawal_rate) %>"
+                     class="w-12 bg-transparent text-right text-lg font-bold text-[#7C3AED] focus:outline-none"
+                     data-calculator-target="rateDisplay"
+                     data-action="change->calculator#commitRate keydown.enter->calculator#commitRateOnEnter keydown.esc->calculator#revertRate" />
               <span class="text-[#6B7280] font-medium ml-1">%</span>
             </div>
           </div>
           <% rate_min, rate_max = 1, 12 %>
           <div class="relative w-full">
             <%= f.range_field :withdrawal_rate,
-                value: @withdrawal_rate,
+                value: format_rate(@withdrawal_rate),
                 min: rate_min,
                 max: rate_max,
-                step: 0.5,
+                step: 0.1,
                 class: "w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#7C3AED]",
-                data: { calculator_target: "rate", action: "input->calculator#updateRate" },
+                data: { calculator_target: "rate", action: "input->calculator#previewRate change->calculator#updateRate" },
                 aria: { label: "Annual withdrawal rate" } %>
           </div>
           <%# Middle labels sit under the thumb centre: the 16px thumb travels from 8px to (100% - 8px). %>
