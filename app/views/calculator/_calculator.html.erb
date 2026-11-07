@@ -6,7 +6,6 @@
 
     <%= form_with url: calculate_path, method: :post, data: { turbo_frame: "calculator_results", calculator_target: "form" } do |f| %>
       <%= f.hidden_field :horizon, value: @horizon, id: "horizon_hidden" %>
-      <%= f.hidden_field :stock_allocation, value: @comparison_allocation, id: "stock_allocation_hidden" %>
       <div class="space-y-6">
 
         <%# Input Mode Toggle %>
@@ -189,16 +188,15 @@
 <%# Time Horizon Chart %>
 <section class="w-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mt-8"
          data-controller="horizon-chart"
-         data-horizon-chart-data-value="<%= @horizon_chart_data.to_json %>"
+         data-horizon-chart-series-value="<%= @horizon_series.to_json %>"
+         data-horizon-chart-scenarios-value="<%= Calculator::TRINITY_ALLOCATIONS.map { |a| { key: a, label: Calculator.allocation_label(a), color: scenario_color(a) } }.to_json %>"
          data-horizon-chart-events-value="<%= MarketEvents.all.to_json %>"
          data-horizon-chart-initial-amount-value="<%= @initial_amount %>"
-         data-horizon-chart-horizon-value="<%= @horizon %>"
-         data-horizon-chart-comparison-value="<%= @comparison_horizon_chart_data.to_json %>"
-         data-horizon-chart-comparison-label-value="<%= Calculator.allocation_label(@comparison_allocation) %>">
+         data-horizon-chart-horizon-value="<%= @horizon %>">
   <div class="px-6 py-5 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
       <h2 class="text-xl font-bold text-[#1F2937]" data-horizon-chart-target="title">Portfolio Value After <%= @horizon %> Years per Starting Year</h2>
-      <p class="text-sm text-[#6B7280] mt-1">Final portfolio value for each historical starting year: 100% S&amp;P 500 vs. <%= Calculator.allocation_label(@comparison_allocation) %></p>
+      <p class="text-sm text-[#6B7280] mt-1">Final portfolio value for each historical starting year.</p>
     </div>
     <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
       <div class="inline-flex rounded-lg border border-gray-300 bg-[#FAFAFA] p-0.5 text-sm font-medium" role="group" aria-label="Y-axis scale">
@@ -230,15 +228,24 @@
     </div>
   </div>
   <div class="p-6">
+    <div class="flex flex-wrap gap-2 mb-4" role="group" aria-label="Portfolios shown" data-horizon-chart-target="chips">
+      <% Calculator::TRINITY_ALLOCATIONS.each do |a| %>
+        <button type="button"
+                data-horizon-chart-target="chip"
+                data-scenario="<%= a %>"
+                data-action="horizon-chart#toggleScenario"
+                aria-pressed="false"
+                data-color="<%= scenario_color(a) %>"
+                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors border-gray-300 text-[#6B7280] bg-[#FAFAFA]">
+          <span class="w-2.5 h-2.5 rounded-full" style="background-color: #D1D5DB"></span><%= Calculator.allocation_label(a) %>
+        </button>
+      <% end %>
+    </div>
     <div class="h-80">
       <canvas data-horizon-chart-target="canvas"></canvas>
     </div>
     <div class="mt-4 flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs font-medium text-[#6B7280]" data-horizon-legend>
-      <span class="font-semibold text-[#1F2937] whitespace-nowrap">100% S&amp;P 500 line:</span>
-      <% [["#EF4444", "Below the starting amount"], ["#F59E0B", "1–4× the starting amount"], ["#10B981", "More than 4× the starting amount"]].each do |color, label| %>
-        <span class="flex items-center gap-1.5 whitespace-nowrap"><span class="w-4 h-1 rounded-full" style="background-color: <%= color %>"></span><%= label %></span>
-      <% end %>
-      <span class="flex items-center gap-1.5 whitespace-nowrap" data-comparison-legend><span class="w-4 h-0.5 rounded-full bg-[#2563EB]"></span><%= Calculator.allocation_label(@comparison_allocation) %> (Trinity study mix)</span>
+      <span class="flex items-center gap-1.5 whitespace-nowrap"><span class="w-4 h-3 rounded-sm bg-[#EF4444]/15 border border-[#EF4444]/40"></span>Below the starting amount</span>
       <span class="flex items-center gap-1.5 whitespace-nowrap"><span class="h-3 border-l border-dashed border-[#6B7280]"></span>Major market event</span>
       <span class="flex items-center gap-1.5 whitespace-nowrap"><span class="w-4 border-t-2 border-dashed border-[#9CA3AF]"></span>Starting amount (<%= number_to_currency(@initial_amount, precision: 0) %>)</span>
     </div>
@@ -247,11 +254,11 @@
 </section>
 
 <%# Heatmap Table %>
-<section id="start-years" class="w-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mt-8">
+<section id="start-years" data-controller="scenario-tabs" class="w-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mt-8">
   <div class="px-6 py-5 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
       <h2 class="text-xl font-bold text-[#1F2937]">Historical Portfolio Health</h2>
-      <p class="text-sm text-[#6B7280] mt-1">100% S&amp;P 500 portfolio value at each milestone, adjusted for inflation-indexed withdrawals</p>
+      <p class="text-sm text-[#6B7280] mt-1" data-scenario-tabs-target="subtitle"><%= Calculator.allocation_label(100) %> portfolio value at each milestone, adjusted for inflation-indexed withdrawals</p>
     </div>
     <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-medium whitespace-nowrap" data-heatmap-legend>
       <div class="flex items-center gap-2">
@@ -277,59 +284,70 @@
     </div>
   </div>
 
+  <div role="tablist" class="flex flex-wrap gap-2 px-6 pt-5">
+    <% Calculator::TRINITY_ALLOCATIONS.each do |a| %>
+      <button type="button" role="tab" data-scenario-tabs-target="tab" data-scenario="<%= a %>" data-color="<%= scenario_color(a) %>" data-action="scenario-tabs#select" aria-selected="false"
+              class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors border-gray-300 text-[#6B7280] bg-[#FAFAFA]">
+        <span class="w-2.5 h-2.5 rounded-full" style="background-color: #D1D5DB"></span><%= Calculator.allocation_label(a) %>
+      </button>
+    <% end %>
+  </div>
+
   <div class="overflow-x-auto custom-scrollbar p-6">
-    <table class="w-full min-w-[700px]">
-      <thead>
-        <tr class="text-xs font-bold uppercase tracking-wider text-[#6B7280]">
-          <th class="text-left py-2 px-2 w-24">Start Year</th>
-          <th class="text-center py-2 px-2">Year 10</th>
-          <th class="text-center py-2 px-2">Year 20</th>
-          <th class="text-center py-2 px-2">Year 30</th>
-          <th class="text-center py-2 px-2">Year 40</th>
-          <th class="text-center py-2 px-2">Year 50</th>
-          <th class="w-10"></th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @results.each do |result| %>
-          <% detail_url = year_detail_path(result[:starting_year], year_detail_scenario_params(initial_amount: @initial_amount, withdrawal_rate: @withdrawal_rate, fee: @fee, stock_allocation: (@comparison_allocation unless @comparison_allocation == Calculator::DEFAULT_COMPARISON_ALLOCATION))) %>
-          <tr class="group border-b border-dashed border-gray-200 last:border-0 hover:bg-[#EDE9FE] cursor-pointer transition-colors"
-              onclick="window.location='<%= detail_url %>'">
-            <td class="py-3 px-2 font-semibold">
-              <%= link_to result[:starting_year], detail_url, class: "text-[#1F2937] group-hover:text-[#7C3AED] transition-colors" %>
-            </td>
-            <% [10, 20, 30, 40, 50].each do |milestone| %>
-              <td class="py-3 px-2 text-center">
-                <% value = result[:milestones][milestone] %>
-                <% if value.nil? %>
-                  <span class="inline-block px-3 py-2 rounded-md bg-gray-100 text-gray-400 text-sm font-medium">N/A</span>
-                <% elsif value == 0 || (result[:depleted_at] && result[:depleted_at] <= milestone) %>
-                  <span class="inline-block px-3 py-2 rounded-md bg-[#EF4444] text-white text-sm font-bold">$0</span>
-                <% else %>
-                  <% pct = (value.to_f / @initial_amount * 100) %>
-                  <% bg_color = if pct > 100
-                                  "bg-[#10B981] text-white"
-                                elsif pct > 50
-                                  "bg-[#34D399] text-white"
-                                elsif pct > 25
-                                  "bg-[#FBBF24] text-gray-900"
-                                else
-                                  "bg-[#F87171] text-white"
-                                end %>
-                  <span class="inline-block px-3 py-2 rounded-md <%= bg_color %> text-sm font-medium">
-                    <%= format_currency(value) %>
-                  </span>
-                <% end %>
-              </td>
-            <% end %>
-            <td class="py-3 px-2 text-center">
-              <svg class="w-4 h-4 inline-block text-gray-300 group-hover:text-[#7C3AED] group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-              </svg>
-            </td>
+    <% Calculator::TRINITY_ALLOCATIONS.each do |a| %>
+      <table class="w-full min-w-[700px] hidden" data-scenario-tabs-target="panel" data-scenario="<%= a %>" data-label="<%= Calculator.allocation_label(a) %>">
+        <thead>
+          <tr class="text-xs font-bold uppercase tracking-wider text-[#6B7280]">
+            <th class="text-left py-2 px-2 w-24">Start Year</th>
+            <th class="text-center py-2 px-2">Year 10</th>
+            <th class="text-center py-2 px-2">Year 20</th>
+            <th class="text-center py-2 px-2">Year 30</th>
+            <th class="text-center py-2 px-2">Year 40</th>
+            <th class="text-center py-2 px-2">Year 50</th>
+            <th class="w-10"></th>
           </tr>
-        <% end %>
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          <% @results_by_allocation[a].reverse.each do |result| %>
+            <% detail_url = year_detail_path(result[:starting_year], year_detail_scenario_params(initial_amount: @initial_amount, withdrawal_rate: @withdrawal_rate, fee: @fee, stock_allocation: (a unless a == 100))) %>
+            <tr class="group border-b border-dashed border-gray-200 last:border-0 hover:bg-[#EDE9FE] cursor-pointer transition-colors"
+                onclick="window.location='<%= detail_url %>'">
+              <td class="py-3 px-2 font-semibold">
+                <%= link_to result[:starting_year], detail_url, class: "text-[#1F2937] group-hover:text-[#7C3AED] transition-colors" %>
+              </td>
+              <% [10, 20, 30, 40, 50].each do |milestone| %>
+                <td class="py-3 px-2 text-center">
+                  <% value = result[:milestones][milestone] %>
+                  <% if value.nil? %>
+                    <span class="inline-block px-3 py-2 rounded-md bg-gray-100 text-gray-400 text-sm font-medium">N/A</span>
+                  <% elsif value == 0 || (result[:depleted_at] && result[:depleted_at] <= milestone) %>
+                    <span class="inline-block px-3 py-2 rounded-md bg-[#EF4444] text-white text-sm font-bold">$0</span>
+                  <% else %>
+                    <% pct = (value.to_f / @initial_amount * 100) %>
+                    <% bg_color = if pct > 100
+                                    "bg-[#10B981] text-white"
+                                  elsif pct > 50
+                                    "bg-[#34D399] text-white"
+                                  elsif pct > 25
+                                    "bg-[#FBBF24] text-gray-900"
+                                  else
+                                    "bg-[#F87171] text-white"
+                                  end %>
+                    <span class="inline-block px-3 py-2 rounded-md <%= bg_color %> text-sm font-medium">
+                      <%= format_currency(value) %>
+                    </span>
+                  <% end %>
+                </td>
+              <% end %>
+              <td class="py-3 px-2 text-center">
+                <svg class="w-4 h-4 inline-block text-gray-300 group-hover:text-[#7C3AED] group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
   </div>
 </section>

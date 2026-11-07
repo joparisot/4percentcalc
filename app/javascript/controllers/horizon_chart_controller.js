@@ -1,28 +1,21 @@
 import { Controller } from "@hotwired/stimulus"
 import { marketEventsPlugin } from "controllers/market_events"
+import { styleChip } from "controllers/scenario_chip"
 
 export default class extends Controller {
-  static targets = ["canvas", "dropdown", "title", "scaleButton", "scaleNote"]
+  static targets = ["canvas", "dropdown", "title", "scaleButton", "scaleNote", "chip"]
   static values = {
-    data: Object,
+    series: Object,
+    scenarios: Array,
     events: { type: Array, default: [] },
     initialAmount: Number,
-    horizon: { type: Number, default: 30 },
-    comparison: Object,
-    comparisonLabel: String
+    horizon: { type: Number, default: 30 }
   }
-
-  static COMPARISON_COLOR = '#2563EB'
-
-  // Line colour by final value relative to the starting amount (JON-8).
-  static BANDS = [
-    { below: 1, color: '#EF4444' },
-    { below: 4, color: '#F59E0B' },
-    { below: Infinity, color: '#10B981' }
-  ]
 
   static SCALE_KEY = "horizonChartScale"
   static SCALES = ["linear", "logarithmic"]
+  static SCENARIOS_KEY = "horizonChartScenarios"
+  static DEFAULT_SCENARIOS = ["100", "50"]
 
   async connect() {
     // Dynamically import Chart.js
@@ -60,6 +53,50 @@ export default class extends Controller {
     this.renderChart()
   }
 
+  get scenarioKeys() {
+    return this.scenariosValue.map(scenario => String(scenario.key))
+  }
+
+  get selected() {
+    let stored = null
+    try { stored = JSON.parse(localStorage.getItem(this.constructor.SCENARIOS_KEY)) } catch (e) {}
+    const keys = this.scenarioKeys
+    const chosen = Array.isArray(stored) ? stored.map(String) : this.constructor.DEFAULT_SCENARIOS
+    const valid = keys.filter(key => chosen.includes(key))
+    return valid.length > 0 ? valid : keys.filter(key => this.constructor.DEFAULT_SCENARIOS.includes(key))
+  }
+
+  toggleScenario(event) {
+    const key = event.currentTarget.dataset.scenario
+    const selected = new Set(this.selected)
+    if (selected.has(key)) {
+      if (selected.size === 1) return
+      selected.delete(key)
+    } else {
+      selected.add(key)
+    }
+    const next = this.scenarioKeys.filter(k => selected.has(k))
+    try { localStorage.setItem(this.constructor.SCENARIOS_KEY, JSON.stringify(next)) } catch (e) {}
+    this.renderChart()
+  }
+
+  updateChipControls(selected) {
+    const last = selected.length === 1 ? selected[0] : null
+    this.chipTargets.forEach((chip) => {
+      const on = selected.includes(chip.dataset.scenario)
+      chip.setAttribute("aria-pressed", String(on))
+      styleChip(chip, chip.dataset.color, on)
+      if (chip.dataset.scenario === last) {
+        chip.setAttribute("aria-disabled", "true")
+        chip.title = "At least one portfolio must be shown"
+      } else {
+        chip.removeAttribute("aria-disabled")
+        chip.removeAttribute("title")
+      }
+    })
+    this.canvasTarget.dataset.renderedScenarios = selected.join(",")
+  }
+
   // An explicit choice wins; otherwise long horizons, where outliers dwarf typical outcomes, default to log.
   get scale() {
     let stored = null
@@ -93,17 +130,23 @@ export default class extends Controller {
     }
 
     const ctx = this.canvasTarget.getContext('2d')
-    const horizonData = this.dataValue[this.horizonValue] || []
+    const selected = this.selected
+    this.updateChipControls(selected)
+    const seriesFor = (key) => this.seriesValue[key]?.[this.horizonValue] || []
+    const horizonData = seriesFor("100")
 
     if (horizonData.length === 0) return
 
     // Every horizon shares the x-axis of the shortest one; later start years don't have enough history yet.
-    const allYears = (this.dataValue[10] || horizonData).map(d => d.year)
+    const allYears = (this.seriesValue["100"]?.[10] || horizonData).map(d => d.year)
     const valueByYear = new Map(horizonData.map(d => [d.year, d.value]))
     const labels = [...new Set([...allYears, ...valueByYear.keys()])].sort((a, b) => a - b)
+    const scenarios = this.scenariosValue.filter(scenario => selected.includes(String(scenario.key)))
+    const rawByScenario = scenarios.map((scenario) => {
+      const byYear = new Map(seriesFor(String(scenario.key)).map(d => [d.year, d.value]))
+      return labels.map(year => byYear.has(year) ? byYear.get(year) : null)
+    })
     const values = labels.map(year => valueByYear.has(year) ? valueByYear.get(year) : null)
-    const comparisonByYear = new Map((this.comparisonValue[this.horizonValue] || []).map(d => [d.year, d.value]))
-    const comparisonValues = labels.map(year => comparisonByYear.has(year) ? comparisonByYear.get(year) : null)
     const naIndex = values.findIndex((v, i) => v === null && values.slice(i).every(rest => rest === null))
     this.canvasTarget.dataset.naFrom = naIndex === -1 ? "" : labels[naIndex]
     const events = this.eventsValue.filter(e => labels.includes(e.year))
@@ -114,66 +157,53 @@ export default class extends Controller {
     const scale = this.scale
     const log = scale === "logarithmic"
     // Log axes can't show $0, so depleted years sit on the axis floor (the tooltip still says they ran out).
-    const smallest = Math.min(...values.filter(v => v > 0), ...comparisonValues.filter(v => v > 0), initialAmount)
+    const smallest = Math.min(...rawByScenario.flatMap(raw => raw.filter(v => v > 0)), initialAmount)
     const floor = 10 ** Math.floor(Math.log10(smallest))
     const plot = (series) => log ? series.map(v => v === null ? null : Math.max(v, floor)) : series
-    const plotted = plot(values)
-    const seriesValues = [values, null, comparisonValues]
     this.updateScaleControls(scale)
 
-    // Create reference line data (same value for all points)
     const referenceLineData = values.map(v => v === null ? null : initialAmount)
+    const lineDataset = (scenario, raw) => ({
+      label: scenario.label,
+      data: plot(raw),
+      borderColor: scenario.color,
+      backgroundColor: scenario.color,
+      borderWidth: scenario.key === 100 ? 3 : 2,
+      fill: false,
+      tension: 0.3,
+      cubicInterpolationMode: 'monotone',
+      pointRadius: 0,
+      pointHoverRadius: scenario.key === 100 ? 6 : 5,
+      pointHoverBackgroundColor: scenario.color
+    })
+    const referenceLine = {
+      label: `Initial Amount (${this.formatCurrency(initialAmount)})`,
+      data: referenceLineData,
+      borderColor: '#9CA3AF',
+      borderWidth: 2,
+      borderDash: [6, 6],
+      pointRadius: 0,
+      pointHoverRadius: 0,
+      fill: false
+    }
+    const datasets = [
+      referenceLine,
+      ...scenarios.map((scenario, i) => scenario.key === 100
+        ? { ...lineDataset(scenario, rawByScenario[i]), backgroundColor: 'rgba(107, 114, 128, 0.08)', fill: 'start' }
+        : lineDataset(scenario, rawByScenario[i]))
+    ]
+    const seriesValues = [null, ...rawByScenario]
 
     this.chart = new this.Chart(ctx, {
       type: 'line',
       plugins: [
+        this.belowStartPlugin(initialAmount),
         this.naZonePlugin(naIndex),
         marketEventsPlugin(events.map(e => ({ index: labels.indexOf(e.year), label: e.label })))
       ],
       data: {
         labels: labels,
-        datasets: [
-          {
-            label: '100% S&P 500',
-            data: plotted,
-            borderColor: '#7C3AED',
-            segment: {
-              // A segment touching a weak year takes that year's colour, so drops into depletion read as red.
-              borderColor: (ctx) => this.bandColor(Math.min(values[ctx.p0DataIndex], values[ctx.p1DataIndex]), initialAmount)
-            },
-            backgroundColor: 'rgba(107, 114, 128, 0.08)',
-            borderWidth: 3,
-            fill: 'start',
-            tension: 0.3,
-            cubicInterpolationMode: 'monotone',
-            pointRadius: 0,
-            pointHoverRadius: 6,
-            pointHoverBackgroundColor: (ctx) => this.bandColor(values[ctx.dataIndex], initialAmount)
-          },
-          {
-            label: `Initial Amount (${this.formatCurrency(initialAmount)})`,
-            data: referenceLineData,
-            borderColor: '#9CA3AF',
-            borderWidth: 2,
-            borderDash: [6, 6],
-            pointRadius: 0,
-            pointHoverRadius: 0,
-            fill: false
-          },
-          {
-            label: this.comparisonLabelValue,
-            data: plot(comparisonValues),
-            borderColor: this.constructor.COMPARISON_COLOR,
-            backgroundColor: this.constructor.COMPARISON_COLOR,
-            borderWidth: 2,
-            fill: false,
-            tension: 0.3,
-            cubicInterpolationMode: 'monotone',
-            pointRadius: 0,
-            pointHoverRadius: 5,
-            pointHoverBackgroundColor: this.constructor.COMPARISON_COLOR
-          }
-        ]
+        datasets
       },
       options: {
         responsive: true,
@@ -196,7 +226,7 @@ export default class extends Controller {
             displayColors: false,
             filter: function(tooltipItem) {
               // Only show tooltip for the portfolios, not the reference line
-              return tooltipItem.datasetIndex !== 1
+              return tooltipItem.datasetIndex !== 0
             },
             callbacks: {
               title: function(context) {
@@ -263,9 +293,18 @@ export default class extends Controller {
     })
   }
 
-  bandColor(value, initialAmount) {
-    const ratio = value / initialAmount
-    return this.constructor.BANDS.find(band => ratio < band.below).color
+  belowStartPlugin(initialAmount) {
+    return {
+      id: 'belowStart',
+      beforeDatasetsDraw: (chart) => {
+        const { ctx, chartArea, scales: { y } } = chart
+        const top = Math.min(Math.max(y.getPixelForValue(initialAmount), chartArea.top), chartArea.bottom)
+        ctx.save()
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.07)'
+        ctx.fillRect(chartArea.left, top, chartArea.right - chartArea.left, chartArea.bottom - top)
+        ctx.restore()
+      }
+    }
   }
 
   naZonePlugin(naIndex) {

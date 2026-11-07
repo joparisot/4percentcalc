@@ -107,11 +107,8 @@ class CalculatorController < ApplicationController
       withdrawal_rate: @withdrawal_rate,
       fee: @fee
     )
-    @results = results.reverse
     @stats = @calculator.summary_stats(results, horizon: 30)
-    @horizon_chart_data = build_horizon_chart_data(@results)
 
-    @comparison_allocation = Calculator.comparison_allocation(params[:stock_allocation])
     results_by_allocation = Calculator::TRINITY_ALLOCATIONS.index_with do |allocation|
       next results if allocation == 100
 
@@ -120,7 +117,8 @@ class CalculatorController < ApplicationController
     @allocation_rows = results_by_allocation.map do |allocation, allocation_results|
       { allocation: allocation, label: Calculator.allocation_label(allocation), stats: @calculator.summary_stats(allocation_results, horizon: 30) }
     end
-    @comparison_horizon_chart_data = build_horizon_chart_data(results_by_allocation[@comparison_allocation])
+    @results_by_allocation = results_by_allocation
+    @horizon_series = results_by_allocation.transform_values { |allocation_results| build_horizon_chart_data(allocation_results) }
   end
 
   # Figures quoted in the homepage FAQ, always for a $1M portfolio regardless of the
