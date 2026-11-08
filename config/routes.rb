@@ -4,6 +4,7 @@ Rails.application.routes.draw do
   get "year_detail/:year", to: "calculator#year_detail", as: :year_detail
   get "methodology.md", to: "agents#methodology", format: false
   get "methodology", to: "calculator#methodology"
+  get "valuations", to: "valuations#show"
 
   get "llms.txt", to: "agents#llms", format: false
 

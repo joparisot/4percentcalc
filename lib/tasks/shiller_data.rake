@@ -13,11 +13,13 @@ namespace :shiller do
     # Col 3: Dividend
     # Col 4: Earnings
     # Col 5: CPI
+    # Col 13: CAPE (Shiller P/E10)
     # Col 18: Monthly total bond return factor (10-year Treasury, GS10), month t to t+1
 
     annual_data = {}
     bond_factors = Hash.new(1.0)
     bond_months = Hash.new(0)
+    cape = {}
 
     # Iterate through rows (data starts at row 9)
     (9..sheet.last_row).each do |row_num|
@@ -36,6 +38,9 @@ namespace :shiller do
       end
 
       next unless month == 1 # Only January data for annual snapshots
+
+      cape_value = sheet.cell(row_num, 13)
+      cape[year] = cape_value.round(2) if cape_value.is_a?(Numeric)
 
       price = sheet.cell(row_num, 2)&.to_f
       dividend = sheet.cell(row_num, 3)&.to_f
@@ -87,6 +92,13 @@ namespace :shiller do
     # Write to JSON file
     output_path = Rails.root.join('lib/data/shiller_data.json')
     File.write(output_path, JSON.pretty_generate(result))
+
+    valuations = {
+      source: "Robert Shiller, Yale University, ie_data.xls (CAPE column)",
+      as_of: format("%04d-01", cape.keys.max),
+      cape: cape.sort.to_h.transform_keys(&:to_s)
+    }
+    File.write(Rails.root.join('lib/data/valuations.json'), JSON.pretty_generate(valuations))
 
     puts "Generated #{result.length} years of data (#{result.first[:year]}-#{result.last[:year]})"
     puts "Saved to #{output_path}"

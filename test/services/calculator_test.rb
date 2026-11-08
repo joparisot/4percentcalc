@@ -192,4 +192,20 @@ class CalculatorTest < ActiveSupport::TestCase
     assert_nil Scenario.from_param("garbage")
     assert_nil Scenario.from_param(nil)
   end
+
+  test "max_withdrawal_rate finds the highest rate that lasts the horizon" do
+    assert_includes 3.7..3.9, @calculator.max_withdrawal_rate(starting_year: 1966)
+    assert_operator @calculator.max_withdrawal_rate(starting_year: 1982), :>, 8
+  end
+
+  test "max_withdrawal_rate is nil without enough years of data" do
+    assert_nil @calculator.max_withdrawal_rate(starting_year: 2000)
+  end
+
+  test "cape lookups" do
+    assert_in_delta 24.06, @calculator.cape(1966), 0.01
+    assert_nil @calculator.cape(1800)
+    assert_equal 2026, @calculator.latest_cape[:year]
+    assert_equal "2026-01", @calculator.latest_cape[:as_of]
+  end
 end

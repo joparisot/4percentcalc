@@ -126,6 +126,34 @@ class Calculator
     end
   end
 
+  # Highest first-year withdrawal rate (to 0.01%) that lasts `horizon` years; nil without that much history.
+  def max_withdrawal_rate(starting_year:, horizon: 30, scenario: Scenario.default, fee: 0)
+    options = { initial_amount: 1_000_000, starting_year: starting_year, scenario: scenario, fee: fee }
+    return nil unless backtest(**options, withdrawal_rate: 4.0)[:milestones][horizon]
+
+    low = 0.5
+    high = 20.0
+    25.times do
+      mid = (low + high) / 2
+      depleted_at = backtest(**options, withdrawal_rate: mid)[:depleted_at]
+      if depleted_at.nil? || depleted_at >= horizon
+        low = mid
+      else
+        high = mid
+      end
+    end
+    low.round(2)
+  end
+
+  def cape(year)
+    @cape_by_year[year.to_s]
+  end
+
+  def latest_cape
+    year = @cape_by_year.keys.map(&:to_i).max
+    { year: year, value: @cape_by_year[year.to_s], as_of: @cape_as_of }
+  end
+
   # Calculate summary statistics
   def summary_stats(results, horizon: 30)
     completed_results = results.select { |r| r[:milestones][horizon] }
@@ -151,6 +179,9 @@ class Calculator
     json_path = Rails.root.join('lib/data/shiller_data.json')
     nasdaq_file = JSON.parse(File.read(Rails.root.join('lib/data/nasdaq_returns.json')))
     @nasdaq_source = nasdaq_file["source"]
+    valuations = JSON.parse(File.read(Rails.root.join('lib/data/valuations.json')))
+    @cape_by_year = valuations["cape"]
+    @cape_as_of = valuations["as_of"]
     nasdaq = nasdaq_file["returns"]
     JSON.parse(File.read(json_path)).each { |year_data| year_data["nasdaq_return"] = nasdaq[year_data["year"].to_s] }
   end

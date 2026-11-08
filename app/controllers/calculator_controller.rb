@@ -30,6 +30,7 @@ class CalculatorController < ApplicationController
     requested = Scenario.from_param(params[:scenario]) || Scenario.from_param(params[:stock_allocation])
     @comparison = (requested unless requested == Scenario.default) || Scenario.default_comparison
     @calculator = calculator = Calculator.new
+    @valuations = ValuationAnalysis.current
     years = calculator.available_years
     raise ActionController::RoutingError, "No data for #{params[:year]}" unless years.include?(@starting_year)
 
