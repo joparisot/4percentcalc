@@ -17,4 +17,13 @@ class ValuationsTest < ActionDispatch::SystemTestCase
     link = find_link(text: /CAPE at start: 24\.\d/)
     assert_equal valuations_path, URI(link[:href]).path
   end
+
+  test "timeline horizon selector updates the heading" do
+    visit valuations_path
+    within("[data-controller='valuation-timeline']") do
+      select "10 years", from: "timeline-horizon-select"
+      assert_selector "h2", text: "what 10 years left"
+      assert_selector "canvas[data-rendered='true']"
+    end
+  end
 end

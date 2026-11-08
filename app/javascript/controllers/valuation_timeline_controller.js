@@ -2,11 +2,12 @@ import { Controller } from "@hotwired/stimulus"
 import { marketEventsPlugin } from "controllers/market_events"
 
 export default class extends Controller {
-  static targets = ["canvas"]
+  static targets = ["canvas", "title", "dropdown", "horizonLabel"]
   static values = {
     data: Array,
     initialAmount: Number,
     dataThrough: Number,
+    horizon: { type: Number, default: 30 },
     events: { type: Array, default: [] }
   }
 
@@ -25,16 +26,24 @@ export default class extends Controller {
     }
   }
 
+  changeHorizon(event) {
+    this.horizonValue = parseInt(event.target.value, 10)
+    this.horizonLabelTargets.forEach(label => { label.textContent = this.horizonValue })
+    this.renderChart()
+  }
+
   renderChart() {
     if (!this.Chart || !this.hasCanvasTarget) return
     if (this.chart) this.chart.destroy()
 
     const rows = this.dataValue
+    const horizon = this.horizonValue
+    const valueFor = (row) => row.values[horizon] ?? null
     const labels = rows.map(r => r.year)
     const initialAmount = this.initialAmountValue
     const dataThrough = this.dataThroughValue
     const events = this.eventsValue.filter(e => labels.includes(e.year))
-    const hasValue = new Set(rows.filter(r => r.final_value !== null).map(r => r.year))
+    const hasValue = new Set(rows.filter(r => valueFor(r) !== null).map(r => r.year))
     const naStart = labels.findIndex(year => year <= dataThrough && !hasValue.has(year))
     const naEnd = labels.lastIndexOf(dataThrough)
     const eventByYear = new Map(events.map(e => [e.year, e.label]))
@@ -51,9 +60,9 @@ export default class extends Controller {
         labels,
         datasets: [
           {
-            label: "Portfolio after 30 years",
+            label: `Portfolio after ${horizon} years`,
             yAxisID: "y",
-            data: rows.map(r => r.final_value),
+            data: rows.map(valueFor),
             borderColor: "#7C3AED",
             backgroundColor: "#7C3AED",
             borderWidth: 2.5,
@@ -85,7 +94,7 @@ export default class extends Controller {
           const active = chart.getActiveElements()
           if (active.length === 0) return
           const row = rows[active[0].index]
-          if (row.final_value !== null || row.year <= dataThrough) this.visit(`/year_detail/${row.year}`)
+          if (row.year <= dataThrough) this.visit(`/year_detail/${row.year}`)
         },
         plugins: {
           legend: { display: false },
@@ -101,7 +110,7 @@ export default class extends Controller {
               label: (context) => {
                 const value = context.raw
                 if (context.datasetIndex === 0) {
-                  return value === null ? "Portfolio after 30 years: Not enough history yet" : `Portfolio after 30 years: ${this.formatAxisCurrency(value)}`
+                  return value === null ? `Portfolio after ${horizon} years: Not enough history yet` : `Portfolio after ${horizon} years: ${this.formatAxisCurrency(value)}`
                 }
                 return value === null ? "CAPE at start: n/a" : `CAPE at start: ${value.toFixed(1)}`
               },
