@@ -5,10 +5,7 @@
   today = @analysis.today
   highest = @analysis.highest_start
   points = @analysis.points
-  by_cape = points.sort_by { |point| point[:cape] }
-  runner_up = by_cape[-2]
   in_progress_top = @analysis.in_progress_points.max_by { |point| point[:cape] }
-  above_25 = points.count { |point| point[:cape] >= 25 }
 %>
 
 <%# Header %>
@@ -160,16 +157,6 @@
     </div>
     <p class="mt-3 text-sm text-[#6B7280]">
       The two move in opposite directions: the higher the CAPE at the start, the lower the rate that lasted. The correlation is <%= number_with_precision(@analysis.correlation, precision: 2) %> on a scale from -1 to +1, where 0 means no link and -1 means they move in exact lockstep in opposite directions. <%= number_with_precision(@analysis.correlation, precision: 2) %> is a strong link, not a perfect one: starting valuation explains roughly <%= (@analysis.correlation**2 * 100).round %>% of the difference between good and bad start years.
-    </p>
-  </section>
-
-  <section class="max-w-4xl">
-    <h2 class="text-2xl font-bold text-[#1F2937] mb-4">A tendency, not a law</h2>
-    <p class="text-[#374151] leading-relaxed">
-      Only <%= above_25 %> start <%= above_25 == 1 ? "year" : "years" %> began above 25, so there is very little history to learn from at today's level.
-      The next most expensive start, <%= link_to runner_up[:year], year_detail_path(runner_up[:year]), class: "text-[#7C3AED] font-medium hover:underline" %> (CAPE <%= number_with_precision(runner_up[:cape], precision: 1) %>), supported <%= number_with_precision(runner_up[:max_swr], precision: 1) %>%.
-      Valuation explains part of the spread in outcomes; inflation, bond yields and what happens next matter too.
-      See the <%= link_to "methodology", methodology_path, class: "text-[#7C3AED] font-medium hover:underline" %> for how each rate is calculated.
     </p>
   </section>
 </main>
