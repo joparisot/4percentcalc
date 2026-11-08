@@ -1,6 +1,7 @@
 class ValuationAnalysis
   HORIZON = 30
   THRESHOLD = 4.0
+  IN_PROGRESS_MIN_YEARS = 20
   RANGES = [[nil, 15], [15, 20], [20, 25], [25, nil]].freeze
 
   def self.current
@@ -20,6 +21,24 @@ class ValuationAnalysis
       next unless max_swr
 
       { year: year, cape: cape, earnings_yield: (100.0 / cape).round(1), max_swr: max_swr }
+    end.sort_by { |point| point[:year] }
+  end
+
+  def in_progress_points
+    @in_progress_points ||= @calculator.available_years.filter_map do |year|
+      cape = @calculator.cape(year)
+      elapsed = @calculator.years_of_data(year)
+      next unless cape && elapsed.between?(IN_PROGRESS_MIN_YEARS, HORIZON - 1)
+
+      four_percent = @calculator.backtest(initial_amount: 1_000_000, withdrawal_rate: THRESHOLD, starting_year: year)
+      {
+        year: year,
+        cape: cape,
+        earnings_yield: (100.0 / cape).round(1),
+        years_elapsed: elapsed,
+        max_swr_so_far: @calculator.max_withdrawal_rate(starting_year: year, horizon: elapsed),
+        four_percent_alive: four_percent[:depleted_at].nil?
+      }
     end.sort_by { |point| point[:year] }
   end
 

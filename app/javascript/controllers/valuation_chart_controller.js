@@ -5,6 +5,7 @@ export default class extends Controller {
   static values = {
     points: Array,
     today: Object,
+    inProgress: { type: Array, default: [] },
     threshold: { type: Number, default: 4 }
   }
 
@@ -30,6 +31,8 @@ export default class extends Controller {
     const threshold = this.thresholdValue
     const today = this.todayValue
     const data = this.pointsValue.map(p => ({ x: p.cape, y: p.max_swr, year: p.year, earningsYield: p.earnings_yield }))
+    const running = this.inProgressValue.map(p => ({ x: p.cape, y: p.max_swr_so_far, year: p.year, earningsYield: p.earnings_yield, yearsElapsed: p.years_elapsed, alive: p.four_percent_alive }))
+    const datasets = [data, running]
     const colorFor = (point) => point.y >= threshold ? "#16A34A" : "#DC2626"
 
     this.chart = new this.Chart(this.canvasTarget.getContext("2d"), {
@@ -42,6 +45,14 @@ export default class extends Controller {
           pointBorderColor: data.map(colorFor),
           pointRadius: 5,
           pointHoverRadius: 7
+        }, {
+          data: running,
+          pointStyle: "circle",
+          pointBackgroundColor: "#FFFFFF",
+          pointBorderColor: "#6B7280",
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7
         }]
       },
       options: {
@@ -50,7 +61,7 @@ export default class extends Controller {
         layout: { padding: { top: 8, right: 16 } },
         onClick: (_event, elements) => {
           if (elements.length === 0) return
-          this.visit(`/year_detail/${data[elements[0].index].year}`)
+          this.visit(`/year_detail/${datasets[elements[0].datasetIndex][elements[0].index].year}`)
         },
         onHover: (event, elements) => {
           event.native.target.style.cursor = elements.length > 0 ? "pointer" : "default"
@@ -68,6 +79,9 @@ export default class extends Controller {
               title: () => "",
               label: (context) => {
                 const p = context.raw
+                if (context.datasetIndex === 1) {
+                  return `${p.year}: CAPE ${p.x.toFixed(1)} (earnings yield ${p.earningsYield.toFixed(1)}%), ${p.yearsElapsed} years in, highest rate that has lasted so far ${p.y.toFixed(2)}%`
+                }
                 return `${p.year}: CAPE ${p.x.toFixed(1)} (earnings yield ${p.earningsYield.toFixed(1)}%), max safe rate ${p.y.toFixed(2)}%`
               }
             }
@@ -77,7 +91,7 @@ export default class extends Controller {
           x: {
             type: "linear",
             min: 0,
-            max: Math.ceil(today.cape) + 2,
+            max: Math.ceil(Math.max(today.cape, ...data.map(p => p.x), ...running.map(p => p.x))) + 2,
             grid: { display: false },
             ticks: { color: "#6B7280", font: { size: 12 } },
             title: { display: true, text: "CAPE at the start of retirement (Shiller P/E10)", color: "#6B7280", font: { size: 12 } }

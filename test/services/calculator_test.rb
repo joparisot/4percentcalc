@@ -208,4 +208,16 @@ class CalculatorTest < ActiveSupport::TestCase
     assert_equal 2026, @calculator.latest_cape[:year]
     assert_equal "2026-01", @calculator.latest_cape[:as_of]
   end
+
+  test "years_of_data counts return years from a start year" do
+    assert_equal @calculator.available_years.last - 1999, @calculator.years_of_data(2000)
+  end
+
+  test "max_withdrawal_rate works for a partial horizon" do
+    elapsed = @calculator.years_of_data(2000)
+    rate = @calculator.max_withdrawal_rate(starting_year: 2000, horizon: elapsed)
+    assert_not_nil rate
+    alive = @calculator.backtest(initial_amount: 1_000_000, withdrawal_rate: 4.0, starting_year: 2000)[:depleted_at].nil?
+    assert_equal alive, rate >= 4.0
+  end
 end

@@ -126,10 +126,15 @@ class Calculator
     end
   end
 
+  # Number of return years available from a start year, inclusive.
+  def years_of_data(starting_year)
+    available_years.last - starting_year + 1
+  end
+
   # Highest first-year withdrawal rate (to 0.01%) that lasts `horizon` years; nil without that much history.
   def max_withdrawal_rate(starting_year:, horizon: 30, scenario: Scenario.default, fee: 0)
     options = { initial_amount: 1_000_000, starting_year: starting_year, scenario: scenario, fee: fee }
-    return nil unless backtest(**options, withdrawal_rate: 4.0)[:milestones][horizon]
+    return nil if years_of_data(starting_year) < horizon
 
     low = 0.5
     high = 20.0

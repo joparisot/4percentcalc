@@ -7,6 +7,7 @@
   points = @analysis.points
   by_cape = points.sort_by { |point| point[:cape] }
   runner_up = by_cape[-2]
+  in_progress_top = @analysis.in_progress_points.max_by { |point| point[:cape] }
   above_25 = points.count { |point| point[:cape] >= 25 }
 %>
 
@@ -56,6 +57,9 @@
       <p class="mt-3 text-[#1F2937] leading-relaxed">
         Higher than <%= @analysis.percentile(today[:cape]) %>% of the <%= points.size %> retirement start years we test.
         The highest any of them started at was <%= number_with_precision(highest[:cape], precision: 1) %>, in <%= link_to highest[:year], year_detail_path(highest[:year]), class: "text-[#7C3AED] font-medium hover:underline" %>.
+        <% if in_progress_top && in_progress_top[:cape] > today[:cape] %>
+          Among retirements still in progress, <%= link_to in_progress_top[:year], year_detail_path(in_progress_top[:year]), class: "text-[#7C3AED] font-medium hover:underline" %> started at <%= number_with_precision(in_progress_top[:cape], precision: 1) %>, higher than today; its 4% withdrawal <%= in_progress_top[:four_percent_alive] ? "has lasted #{in_progress_top[:years_elapsed]} years so far" : "ran out" %>.
+        <% end %>
       </p>
     </div>
   </section>
@@ -63,6 +67,7 @@
   <section class="bg-white rounded-xl border border-gray-200 shadow-sm p-6"
            data-controller="valuation-chart"
            data-valuation-chart-points-value="<%= points.to_json %>"
+           data-valuation-chart-in-progress-value="<%= @analysis.in_progress_points.to_json %>"
            data-valuation-chart-today-value="<%= today.to_json %>"
            data-valuation-chart-threshold-value="<%= ValuationAnalysis::THRESHOLD %>">
     <h2 class="text-2xl font-bold text-[#1F2937] mb-6">Starting valuation vs. highest safe withdrawal rate</h2>
@@ -77,6 +82,10 @@
         <span class="text-sm text-[#6B7280] whitespace-nowrap">4% ran out</span>
       </div>
       <div class="flex items-center gap-2">
+        <div class="w-3 h-3 rounded-full bg-white border-2 border-[#6B7280]"></div>
+        <span class="text-sm text-[#6B7280] whitespace-nowrap">Still running (<%= ValuationAnalysis::IN_PROGRESS_MIN_YEARS %> to <%= ValuationAnalysis::HORIZON - 1 %> years in)</span>
+      </div>
+      <div class="flex items-center gap-2">
         <div class="h-3 border-l border-dashed border-[#6B7280]"></div>
         <span class="text-sm text-[#6B7280] whitespace-nowrap">Today</span>
       </div>
@@ -85,7 +94,7 @@
     <div class="relative w-full" style="height: 460px;">
       <canvas data-valuation-chart-target="canvas"></canvas>
     </div>
-    <p class="mt-3 text-sm text-[#6B7280]">Click a dot to see that year's retirement. 100% S&amp;P 500, no fees, before taxes.</p>
+    <p class="mt-3 text-sm text-[#6B7280]">Click a dot to see that year's retirement. 100% S&amp;P 500, no fees, before taxes. Hollow dots are retirements that started <%= ValuationAnalysis::IN_PROGRESS_MIN_YEARS %> to <%= ValuationAnalysis::HORIZON - 1 %> years ago; their value is the highest rate that has survived so far, which can only fall as years are added.</p>
   </section>
 
   <section class="max-w-4xl">

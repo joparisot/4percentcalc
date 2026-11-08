@@ -31,4 +31,15 @@ class ValuationAnalysisTest < ActiveSupport::TestCase
   test "correlation is strongly negative" do
     assert_operator @analysis.correlation, :<, -0.7
   end
+
+  test "in-progress points cover start years 20 to 29 years in" do
+    calculator = Calculator.new
+    expected = calculator.available_years.select { |y| calculator.years_of_data(y).between?(20, 29) }
+    assert_equal expected, @analysis.in_progress_points.map { |p| p[:year] }
+
+    point = @analysis.in_progress_points.find { |p| p[:year] == 2000 }
+    assert_in_delta 43.8, point[:cape], 0.1
+    assert_equal calculator.available_years.last - 2000 + 1, point[:years_elapsed]
+    assert_operator point[:max_swr_so_far], :>, 0
+  end
 end
