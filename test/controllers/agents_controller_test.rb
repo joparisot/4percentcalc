@@ -36,7 +36,7 @@ class AgentsControllerTest < ActionDispatch::IntegrationTest
   test "root page has the copy prompt button" do
     get root_path
     assert_select "button[data-action='click->calculator#copyPrompt']" do
-      assert_select "[data-calculator-target='promptLabel']", text: "Copy prompt for your AI assistant"
+      assert_select "[data-calculator-target='promptLabel']", text: "Customize this scenario with your AI"
     end
   end
 

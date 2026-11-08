@@ -59,7 +59,7 @@ Values above are illustrative; `results` has one entry per start year.
 
 - [/llms.txt](https://www.4percentcalc.com/llms.txt): overview, API and rules in plain text.
 - [/methodology.md](https://www.4percentcalc.com/methodology.md): the calculation in markdown.
-- The calculator has a "Copy prompt for your AI assistant" button that copies a ready-made prompt with the current scenario, the API URLs and the rules, so an assistant can model a variation the site doesn't offer.
+- The calculator has a "Customize this scenario with your AI" button that copies a ready-made prompt with the current scenario, the API URLs and the rules, so an assistant can model a variation the site doesn't offer.
 
 ## Running locally
 
