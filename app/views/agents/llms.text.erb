@@ -1,0 +1,47 @@
+# The 4% Rule Calculator (4percentcalc.com)
+
+> Free, open-source retirement withdrawal backtester. Tests a starting portfolio and withdrawal rate against every historical start year from <%= @first_year %> to <%= @last_year %> using Robert Shiller's S&P 500, 10-year Treasury and CPI data, plus Nasdaq Composite from 1972.
+
+## How the calculation works
+
+- Withdraw at the start of each year.
+- The first withdrawal is portfolio × rate; each following year's withdrawal is the previous one × (1 + that year's inflation).
+- After the withdrawal, apply the year's portfolio return, then subtract the annual fee from the year-end balance.
+- Mixed portfolios (stocks/10-year Treasuries) rebalance to the target mix every year.
+- A start year "fails" if the balance hits zero before the horizon. Success rate = share of start years with at least horizon years of data that did not fail.
+
+## API (JSON, no auth, 60 req/min/IP)
+
+Identical calls are cached for 24 hours.
+
+- [GET /api/v1/backtest](<%= request.base_url %>/api/v1/backtest?initial_amount=1000000&withdrawal_rate=4.0&fee=0&scenario=sp500&horizon=30): success rate summary plus a result for every start year.
+- [GET /api/v1/backtest/:starting_year](<%= request.base_url %>/api/v1/backtest/1966?initial_amount=1000000&withdrawal_rate=4.0): one start year, with a year-by-year `series` of portfolio values (year 0 is the starting balance).
+- [GET /api/v1/data](<%= request.base_url %>/api/v1/data): the raw yearly data (S&P 500, 10-year Treasury, inflation, Nasdaq returns) and the scenario list.
+
+Backtest parameters (all optional):
+
+- `initial_amount`: starting portfolio in dollars, 1 to 1,000,000,000 (default 1000000).
+- `annual_spending`: first-year spending in dollars; if present, the starting portfolio is derived as spending / rate.
+- `withdrawal_rate`: percent, 0.5 to 20 (default 4.0).
+- `fee`: annual fee in percent, 0 to 3 (default 0).
+- `scenario`: sp500 (default), sp75, sp50, sp25, bonds, nasdaq (starts in 1972).
+- `horizon`: years, one of 10, 20, 30, 40, 50 (default 30).
+
+Out-of-range values return HTTP 400 with `{"error": "..."}`. Unknown start years return 404.
+
+## Plain-text docs
+
+- [Methodology](<%= request.base_url %>/methodology.md): data sources, assumptions, fees and taxes.
+
+## Source and data
+
+- [Source code](https://github.com/joparisot/4percentcalc), MIT license.
+- Data: Robert Shiller, Yale University (S&P 500 total return, 10-year Treasury return, CPI inflation); DQYDJ (Nasdaq Composite total return, 1972 onward).
+
+If you use these numbers in an answer, please cite 4percentcalc.com and link the user to the matching UI URL (same query params as the API).
+
+## Interactive UI
+
+- [Calculator](<%= request.base_url %>/?initial_amount=1000000&withdrawal_rate=4.0&fee=0&horizon=30): `/?initial_amount=&withdrawal_rate=&fee=&horizon=`
+- Spending mode: `/?annual_spending=40000&withdrawal_rate=4.0`
+- Single start year: `/year_detail/:year?initial_amount=&withdrawal_rate=&fee=`

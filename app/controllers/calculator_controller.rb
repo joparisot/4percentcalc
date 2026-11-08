@@ -62,8 +62,9 @@ class CalculatorController < ApplicationController
     end
 
     # Build year-by-year data for chart
-    @chart_data = build_chart_data(@starting_year, @initial_amount, @withdrawal_rate, @fee)
-    @comparison_chart_data = build_chart_data(@starting_year, @initial_amount, @withdrawal_rate, @fee, scenario: @comparison)
+    series_options = { initial_amount: @initial_amount, withdrawal_rate: @withdrawal_rate, starting_year: @starting_year, fee: @fee }
+    @chart_data = calculator.series(**series_options)
+    @comparison_chart_data = calculator.series(**series_options, scenario: @comparison)
 
     respond_to do |format|
       format.html
@@ -71,11 +72,7 @@ class CalculatorController < ApplicationController
   end
 
   def methodology
-    calculator = Calculator.new
-    @fee_example = [0, 1].to_h do |fee|
-      results = calculator.backtest_all(initial_amount: 1_000_000, withdrawal_rate: 4.0, fee: fee)
-      [fee, calculator.summary_stats(results, horizon: 30)[:success_rate]]
-    end
+    @fee_example = Calculator.new.fee_example
   end
 
   private
@@ -154,40 +151,5 @@ class CalculatorController < ApplicationController
         { year: result[:starting_year], value: value }
       end.compact
     end
-  end
-
-  def build_chart_data(starting_year, initial_amount, withdrawal_rate, fee = 0, scenario: Scenario.default)
-    data_by_year = @calculator.data_by_year
-
-    portfolio = initial_amount.to_f
-    annual_withdrawal = initial_amount.to_f * (withdrawal_rate.to_f / 100)
-
-    chart_points = [{ year: 0, value: portfolio.round(0) }]
-
-    (0...50).each do |year_offset|
-      current_year = starting_year + year_offset
-      year_data = data_by_year[current_year]
-
-      break unless year_data
-
-      scenario_return = scenario.annual_return(year_data)
-      break if scenario_return.nil?
-
-      portfolio -= annual_withdrawal
-      break if portfolio <= 0
-
-      portfolio *= (1 + scenario_return)
-      portfolio *= (1 - fee.to_f / 100)
-      chart_points << { year: year_offset + 1, value: portfolio.round(0) }
-
-      annual_withdrawal *= (1 + year_data["inflation"])
-    end
-
-    # If portfolio hit zero, add final point
-    if portfolio <= 0
-      chart_points << { year: chart_points.last[:year] + 1, value: 0 }
-    end
-
-    chart_points
   end
 end

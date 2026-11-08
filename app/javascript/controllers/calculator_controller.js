@@ -1,4 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
+import { buildAgentPrompt } from "controllers/agent_prompt"
+import { copyToClipboard } from "controllers/clipboard"
 
 const AMOUNT_RANGE = { min: 1000, max: 100000000, step: 100000 }
 const SPENDING_RANGE = { min: 1000, max: 1000000, step: 5000 }
@@ -8,7 +10,7 @@ let syncUrlOnConnect = false
 
 export default class extends Controller {
   static targets = [
-    "form", "rate", "rateDisplay", "amountDisplay", "amountHidden", "shareLabel",
+    "form", "rate", "rateDisplay", "amountDisplay", "amountHidden", "shareLabel", "promptLabel",
     "spendingDisplay", "spendingHidden", "requiredAmount", "requiredSpending", "requiredRate"
   ]
 
@@ -155,19 +157,23 @@ export default class extends Controller {
     return `$${value.toLocaleString('en-US')}`
   }
 
-  shareUrl() {
-    const params = new URLSearchParams()
+  currentParams() {
+    const params = {}
     if (this.hasSpendingHiddenTarget) {
-      params.set('annual_spending', this.spendingHiddenTarget.value)
+      params.annual_spending = this.spendingHiddenTarget.value
     } else if (this.hasAmountHiddenTarget) {
-      params.set('initial_amount', this.amountHiddenTarget.value)
+      params.initial_amount = this.amountHiddenTarget.value
     }
-    if (this.hasRateTarget) params.set('withdrawal_rate', parseFloat(this.rateTarget.value).toFixed(1))
+    if (this.hasRateTarget) params.withdrawal_rate = parseFloat(this.rateTarget.value).toFixed(1)
     const horizon = document.getElementById('horizon_hidden')
-    if (horizon && horizon.value) params.set('horizon', horizon.value)
+    if (horizon && horizon.value) params.horizon = horizon.value
     const fee = this.hasFormTarget && this.formTarget.elements['fee']
-    if (fee && parseFloat(fee.value) > 0) params.set('fee', fee.value)
+    if (fee && parseFloat(fee.value) > 0) params.fee = fee.value
+    return params
+  }
 
+  shareUrl() {
+    const params = new URLSearchParams(this.currentParams())
     return `${window.location.origin}${window.location.pathname}?${params.toString()}`
   }
 
@@ -178,29 +184,12 @@ export default class extends Controller {
   }
 
   copyLink() {
-    const url = this.shareUrl()
+    copyToClipboard(this.shareUrl(), this.hasShareLabelTarget ? this.shareLabelTarget : null, 'Link copied!')
+  }
 
-    const onSuccess = () => {
-      if (!this.hasShareLabelTarget) return
-      const label = this.shareLabelTarget
-      const original = label.textContent
-      label.textContent = 'Link copied!'
-      setTimeout(() => { label.textContent = original }, 2000)
-    }
-
-    if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(url).then(onSuccess)
-    } else {
-      const textarea = document.createElement('textarea')
-      textarea.value = url
-      textarea.style.position = 'fixed'
-      textarea.style.opacity = '0'
-      document.body.appendChild(textarea)
-      textarea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textarea)
-      onSuccess()
-    }
+  copyPrompt() {
+    const prompt = buildAgentPrompt(this.currentParams(), window.location.origin)
+    copyToClipboard(prompt, this.hasPromptLabelTarget ? this.promptLabelTarget : null, 'Prompt copied!')
   }
 
   debounceSubmit() {

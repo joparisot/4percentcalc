@@ -1,6 +1,6 @@
 class Calculator
   MILESTONES = [10, 20, 30, 40, 50].freeze
-  attr_reader :data_by_year
+  attr_reader :data, :data_by_year, :nasdaq_source
 
   # Portfolio needed so that year one's withdrawal covers annual_spending.
   def self.required_portfolio(annual_spending:, withdrawal_rate:)
@@ -85,6 +85,47 @@ class Calculator
     end
   end
 
+  # Year-by-year portfolio values for one starting year; year 0 is the starting balance.
+  def series(initial_amount:, withdrawal_rate:, starting_year:, fee: 0, scenario: Scenario.default)
+    portfolio = initial_amount.to_f
+    annual_withdrawal = initial_amount.to_f * (withdrawal_rate.to_f / 100)
+
+    chart_points = [{ year: 0, value: portfolio.round(0) }]
+
+    (0...50).each do |year_offset|
+      year_data = @data_by_year[starting_year + year_offset]
+
+      break unless year_data
+
+      scenario_return = scenario.annual_return(year_data)
+      break if scenario_return.nil?
+
+      portfolio -= annual_withdrawal
+      break if portfolio <= 0
+
+      portfolio *= (1 + scenario_return)
+      portfolio *= (1 - fee.to_f / 100)
+      chart_points << { year: year_offset + 1, value: portfolio.round(0) }
+
+      annual_withdrawal *= (1 + year_data["inflation"])
+    end
+
+    # If portfolio hit zero, add final point
+    if portfolio <= 0
+      chart_points << { year: chart_points.last[:year] + 1, value: 0 }
+    end
+
+    chart_points
+  end
+
+  # 30-year success rate for $1M at 4%, keyed by annual fee percentage.
+  def fee_example(fees: [0, 1])
+    fees.to_h do |fee|
+      results = backtest_all(initial_amount: 1_000_000, withdrawal_rate: 4.0, fee: fee)
+      [fee, summary_stats(results, horizon: 30)[:success_rate]]
+    end
+  end
+
   # Calculate summary statistics
   def summary_stats(results, horizon: 30)
     completed_results = results.select { |r| r[:milestones][horizon] }
@@ -108,7 +149,9 @@ class Calculator
 
   def load_data
     json_path = Rails.root.join('lib/data/shiller_data.json')
-    nasdaq = JSON.parse(File.read(Rails.root.join('lib/data/nasdaq_returns.json')))["returns"]
+    nasdaq_file = JSON.parse(File.read(Rails.root.join('lib/data/nasdaq_returns.json')))
+    @nasdaq_source = nasdaq_file["source"]
+    nasdaq = nasdaq_file["returns"]
     JSON.parse(File.read(json_path)).each { |year_data| year_data["nasdaq_return"] = nasdaq[year_data["year"].to_s] }
   end
 end

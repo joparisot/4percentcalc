@@ -1,0 +1,44 @@
+# Methodology
+
+Here is exactly how the calculator works.
+
+## How It Works
+
+The calculator uses the "Classic 4% Rule" from William Bengen's 1994 research.
+
+- Year 1: Withdraw 4% of your initial portfolio.
+- Year 2+: Increase that dollar amount by each year's inflation.
+- Withdrawals are annual (beginning of each year).
+- The remaining portfolio grows/shrinks with S&P 500 returns.
+- For comparison, the same withdrawals are also run on the Trinity study's (https://en.wikipedia.org/wiki/Trinity_study) stock/bond mixes (75/25, 50/50, 25/75, 0/100), rebalanced to the target mix every year.
+
+Example: $1M portfolio → $40k Year 1 → if 3% inflation → $41,200 Year 2.
+
+Order of operations each year: withdraw, then apply the year's portfolio return, then subtract the annual fee from the year-end balance. A start year fails if the balance hits zero before the horizon. Success rate = share of start years with at least horizon years of data that did not fail.
+
+## Data Sources
+
+- S&P 500 returns & CPI inflation: Robert Shiller, Yale University (https://shillerdata.com/). Includes monthly S&P 500 prices, dividends, and CPI from 1871 to present. We use annual returns (January to January). Dataset: https://img1.wsimg.com/blobby/go/e5e77e0b-59d1-44d9-ab25-4763ac982e53/downloads/ie_data.xls
+- Bond returns: the same dataset's monthly total returns on 10-year U.S. Treasuries (GS10), compounded January to January. The original Trinity study used long-term high-grade corporate bonds, so its success rates differ slightly.
+- Nasdaq Composite returns: DQYDJ's NASDAQ Annual Return Rankings (https://dqydj.com/nasdaq-annual-return-rankings/), calendar-year total return with dividends reinvested, 1972 onward, built from FRED's NASDAQCOM series. These run December to December while the Shiller S&P 500 series runs January to January, so the two are offset by one month. QQQ tracks the Nasdaq-100 (since 1985), a narrower index that behaves very similarly.
+
+The raw yearly data is available as JSON at <%= request.base_url %>/api/v1/data.
+
+## Fees and Taxes
+
+Fees. Results assume no fees unless you pick an annual fee under Portfolio Parameters. The fee is charged on the portfolio at the end of each year, like a fund's expense ratio or an advisor's fee. It matters more than it looks: with $1M at 4% over 30 years, the historical success rate is <%= @fee_example[0] %>% with no fees and <%= @fee_example[1] %>% with a 1% annual fee.
+
+Taxes. Results are before taxes, because what you owe depends on which account the money comes from:
+
+- Taxable brokerage account: only the gain is taxed. Selling shares gives you back your cost basis tax-free, and the profit is taxed as a capital gain (0%, 15% or 20% federally for shares held over a year). Dividends are taxed every year, even when reinvested.
+- Traditional 401(k) or IRA: every dollar withdrawn is taxed as ordinary income.
+- Roth 401(k) or IRA: qualified withdrawals are tax-free.
+
+The simplest way to account for taxes is to treat the withdrawal as your pre-tax budget. If you need $40,000 a year after tax and expect to pay about 10% in tax, plan to withdraw about $44,400 a year. This is general information, not tax advice.
+
+## Assumptions
+
+- 100% S&P 500, plus stock/bond mixes: The main results put all money in the S&P 500. The stock/bond comparison holds the rest in 10-year Treasuries and rebalances annually.
+- Before taxes, fees optional: Results are before taxes. Fees are zero unless you pick an annual fee in the calculator.
+- Annual withdrawals: Taken at the beginning of each year.
+- Dividends reinvested: Returns include dividend reinvestment.

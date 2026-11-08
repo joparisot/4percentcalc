@@ -71,6 +71,12 @@ group :development do
   gem "error_highlight", ">= 0.4.0", platforms: [:ruby]
 end
 
+# Rate limiting for the JSON API
+gem "rack-attack", "~> 6.8"
+
+# One JSON line per request in production
+gem "lograge", "~> 0.15"
+
 gem 'roo'
 gem 'roo-xls'
 gem 'caxlsx'
