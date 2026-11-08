@@ -6,6 +6,7 @@ class ValuationsTest < ActionDispatch::SystemTestCase
 
     assert_selector "[data-controller='valuation-chart'] canvas"
     assert_selector "canvas[data-valuation-chart-target='canvas'][data-rendered='true']", wait: 5
+    assert_selector "[data-controller='valuation-timeline'] canvas[data-rendered='true']", wait: 5
     assert_selector "table[data-valuation-buckets] tbody tr", maximum: 4
     assert_selector "table[data-valuation-buckets]", text: "Under 15"
   end

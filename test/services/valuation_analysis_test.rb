@@ -42,4 +42,19 @@ class ValuationAnalysisTest < ActiveSupport::TestCase
     assert_equal calculator.available_years.last - 2000 + 1, point[:years_elapsed]
     assert_operator point[:max_swr_so_far], :>, 0
   end
+
+  test "timeline spans every year through today's CAPE" do
+    calculator = Calculator.new
+    timeline = @analysis.timeline
+    assert_equal calculator.available_years.first, timeline.first[:year]
+    assert_equal calculator.latest_cape[:year], timeline.last[:year]
+
+    entry = timeline.find { |e| e[:year] == 1966 }
+    assert_equal 0, entry[:final_value]
+    assert_in_delta 24.06, entry[:cape], 0.01
+
+    entry = timeline.find { |e| e[:year] == 2000 }
+    assert_nil entry[:final_value]
+    assert_in_delta 43.8, entry[:cape], 0.1
+  end
 end

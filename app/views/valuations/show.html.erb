@@ -97,6 +97,39 @@
     <p class="mt-3 text-sm text-[#6B7280]">Click a dot to see that year's retirement. 100% S&amp;P 500, no fees, before taxes. Hollow dots are retirements that started <%= ValuationAnalysis::IN_PROGRESS_MIN_YEARS %> to <%= ValuationAnalysis::HORIZON - 1 %> years ago; their value is the highest rate that has survived so far, which can only fall as years are added.</p>
   </section>
 
+  <section class="bg-white rounded-xl border border-gray-200 shadow-sm p-6"
+           data-controller="valuation-timeline"
+           data-valuation-timeline-data-value="<%= @analysis.timeline.to_json %>"
+           data-valuation-timeline-initial-amount-value="1000000"
+           data-valuation-timeline-data-through-value="<%= @analysis.data_through %>"
+           data-valuation-timeline-events-value="<%= MarketEvents.all.to_json %>">
+    <h2 class="text-2xl font-bold text-[#1F2937] mb-2">Over time: valuation at the start vs. what 30 years left</h2>
+    <p class="text-sm text-[#6B7280] mb-6">Purple: portfolio after 30 years, starting with $1,000,000 and withdrawing 4%, 100% S&amp;P 500. Grey: CAPE that January.</p>
+
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mb-4">
+      <div class="flex items-center gap-2">
+        <div class="w-3 h-3 rounded-full bg-[#7C3AED]"></div>
+        <span class="text-sm text-[#6B7280] whitespace-nowrap">Portfolio after 30 years</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-3 h-3 rounded-full bg-[#6B7280]"></div>
+        <span class="text-sm text-[#6B7280] whitespace-nowrap">CAPE at start</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-3 h-3 bg-red-500/20"></div>
+        <span class="text-sm text-[#6B7280] whitespace-nowrap">Below the starting amount</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="h-3 border-l border-dashed border-[#6B7280]"></div>
+        <span class="text-sm text-[#6B7280] whitespace-nowrap">Major market event</span>
+      </div>
+    </div>
+
+    <div class="relative w-full" style="height: 400px;">
+      <canvas data-valuation-timeline-target="canvas"></canvas>
+    </div>
+  </section>
+
   <section class="max-w-4xl">
     <h2 class="text-2xl font-bold text-[#1F2937] mb-4">Outcomes by starting CAPE</h2>
     <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">

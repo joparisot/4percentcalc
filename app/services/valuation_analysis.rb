@@ -42,6 +42,22 @@ class ValuationAnalysis
     end.sort_by { |point| point[:year] }
   end
 
+  def timeline
+    @timeline ||= begin
+      first = @calculator.available_years.first
+      (first..@calculator.latest_cape[:year]).map do |year|
+        final_value = if @calculator.years_of_data(year) >= HORIZON && @calculator.data_by_year[year]
+          @calculator.backtest(initial_amount: 1_000_000, withdrawal_rate: THRESHOLD, starting_year: year)[:milestones][HORIZON]
+        end
+        { year: year, cape: @calculator.cape(year), final_value: final_value }
+      end
+    end
+  end
+
+  def data_through
+    @calculator.available_years.last
+  end
+
   def today
     latest = @calculator.latest_cape
     { year: latest[:year], cape: latest[:value], as_of: latest[:as_of] }
