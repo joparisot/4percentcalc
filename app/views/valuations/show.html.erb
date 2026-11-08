@@ -52,10 +52,9 @@
         CAPE in <%= Date.strptime(today[:as_of], "%Y-%m").strftime("%B %Y") %>: <%= number_with_precision(today[:cape], precision: 1) %>
       </p>
       <p class="mt-3 text-[#1F2937] leading-relaxed">
-        Higher than <%= @analysis.percentile(today[:cape]) %>% of the <%= points.size %> retirement start years we test.
-        The highest any of them started at was <%= number_with_precision(highest[:cape], precision: 1) %>, in <%= link_to highest[:year], year_detail_path(highest[:year]), class: "text-[#7C3AED] font-medium hover:underline" %>.
+        Higher than <%= @analysis.percentile(today[:cape]) %>% of the <%= points.size %> start years (<%= points.first[:year] %> to <%= points.last[:year] %>) with a full 30-year record. The most expensive of those was <%= number_with_precision(highest[:cape], precision: 1) %>, in <%= link_to highest[:year], year_detail_path(highest[:year]), class: "text-[#7C3AED] font-medium hover:underline" %>.
         <% if in_progress_top && in_progress_top[:cape] > today[:cape] %>
-          Among retirements still in progress, <%= link_to in_progress_top[:year], year_detail_path(in_progress_top[:year]), class: "text-[#7C3AED] font-medium hover:underline" %> started at <%= number_with_precision(in_progress_top[:cape], precision: 1) %>, higher than today; its 4% withdrawal <%= in_progress_top[:four_percent_alive] ? "has lasted #{in_progress_top[:years_elapsed]} years so far" : "ran out" %>.
+          More recent retirements started at higher valuations but haven't reached 30 years yet: <%= link_to in_progress_top[:year], year_detail_path(in_progress_top[:year]), class: "text-[#7C3AED] font-medium hover:underline" %> began at <%= number_with_precision(in_progress_top[:cape], precision: 1) %>, above today, and its 4% withdrawal <%= in_progress_top[:four_percent_alive] ? "has lasted #{in_progress_top[:years_elapsed]} years so far" : "ran out" %>. Switch the chart below to a 10- or 20-year horizon to see how those years did.
         <% end %>
       </p>
     </div>
