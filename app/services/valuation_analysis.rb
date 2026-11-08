@@ -48,9 +48,14 @@ class ValuationAnalysis
       (first..@calculator.latest_cape[:year]).map do |year|
         values = {}
         if @calculator.data_by_year[year]
-          milestones = @calculator.backtest(initial_amount: 1_000_000, withdrawal_rate: THRESHOLD, starting_year: year)[:milestones]
-          Calculator::MILESTONES.each do |horizon|
-            values[horizon] = milestones[horizon] if @calculator.years_of_data(year) >= horizon && milestones[horizon]
+          Scenario::ALL.each do |scenario|
+            next if scenario.first_year && year < scenario.first_year
+
+            milestones = @calculator.backtest(initial_amount: 1_000_000, withdrawal_rate: THRESHOLD, starting_year: year, scenario: scenario)[:milestones]
+            by_horizon = Calculator::MILESTONES.each_with_object({}) do |horizon, hash|
+              hash[horizon] = milestones[horizon] if @calculator.years_of_data(year) >= horizon && milestones[horizon]
+            end
+            values[scenario.key] = by_horizon
           end
         end
         { year: year, cape: @calculator.cape(year), values: values }

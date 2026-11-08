@@ -1,12 +1,17 @@
 import { Controller } from "@hotwired/stimulus"
 import { marketEventsPlugin } from "controllers/market_events"
+import { styleChip } from "controllers/scenario_chip"
 
 export default class extends Controller {
-  static targets = ["canvas", "title", "dropdown", "horizonLabel"]
+  static SCENARIOS_KEY = "valuationTimelineScenarios"
+  static DEFAULT_SCENARIOS = ["sp500"]
+
+  static targets = ["canvas", "title", "dropdown", "horizonLabel", "chip"]
   static values = {
     data: Array,
     initialAmount: Number,
     dataThrough: Number,
+    scenarios: Array,
     horizon: { type: Number, default: 30 },
     events: { type: Array, default: [] }
   }
@@ -26,6 +31,50 @@ export default class extends Controller {
     }
   }
 
+  get scenarioKeys() {
+    return this.scenariosValue.map(scenario => String(scenario.key))
+  }
+
+  get selected() {
+    let stored = null
+    try { stored = JSON.parse(localStorage.getItem(this.constructor.SCENARIOS_KEY)) } catch (e) {}
+    const keys = this.scenarioKeys
+    const chosen = Array.isArray(stored) ? stored.map(String) : this.constructor.DEFAULT_SCENARIOS
+    const valid = keys.filter(key => chosen.includes(key))
+    return valid.length > 0 ? valid : keys.filter(key => this.constructor.DEFAULT_SCENARIOS.includes(key))
+  }
+
+  toggleScenario(event) {
+    const key = event.currentTarget.dataset.scenario
+    const selected = new Set(this.selected)
+    if (selected.has(key)) {
+      if (selected.size === 1) return
+      selected.delete(key)
+    } else {
+      selected.add(key)
+    }
+    const next = this.scenarioKeys.filter(k => selected.has(k))
+    try { localStorage.setItem(this.constructor.SCENARIOS_KEY, JSON.stringify(next)) } catch (e) {}
+    this.renderChart()
+  }
+
+  updateChipControls(selected) {
+    const last = selected.length === 1 ? selected[0] : null
+    this.chipTargets.forEach((chip) => {
+      const on = selected.includes(chip.dataset.scenario)
+      chip.setAttribute("aria-pressed", String(on))
+      styleChip(chip, chip.dataset.color, on)
+      if (chip.dataset.scenario === last) {
+        chip.setAttribute("aria-disabled", "true")
+        chip.title = "At least one portfolio must be shown"
+      } else {
+        chip.removeAttribute("aria-disabled")
+        chip.removeAttribute("title")
+      }
+    })
+    this.canvasTarget.dataset.renderedScenarios = selected.join(",")
+  }
+
   changeHorizon(event) {
     this.horizonValue = parseInt(event.target.value, 10)
     this.horizonLabelTargets.forEach(label => { label.textContent = this.horizonValue })
@@ -38,7 +87,10 @@ export default class extends Controller {
 
     const rows = this.dataValue
     const horizon = this.horizonValue
-    const valueFor = (row) => row.values[horizon] ?? null
+    const selected = this.selected
+    this.updateChipControls(selected)
+    const scenarios = this.scenariosValue.filter(scenario => selected.includes(String(scenario.key)))
+    const valueFor = (row, key = "sp500") => row.values[key]?.[horizon] ?? null
     const labels = rows.map(r => r.year)
     const initialAmount = this.initialAmountValue
     const dataThrough = this.dataThroughValue
@@ -59,19 +111,19 @@ export default class extends Controller {
       data: {
         labels,
         datasets: [
-          {
-            label: `Portfolio after ${horizon} years`,
+          ...scenarios.map(scenario => ({
+            label: scenario.label,
             yAxisID: "y",
-            data: rows.map(valueFor),
-            borderColor: "#7C3AED",
-            backgroundColor: "#7C3AED",
-            borderWidth: 2.5,
+            data: rows.map(r => valueFor(r, scenario.key)),
+            borderColor: scenario.color,
+            backgroundColor: scenario.color,
+            borderWidth: scenario.key === "sp500" ? 2.5 : 2,
             tension: 0.4,
             cubicInterpolationMode: "monotone",
             pointRadius: 0,
             pointHoverRadius: 4,
             spanGaps: false
-          },
+          })),
           {
             label: "CAPE at start",
             yAxisID: "y1",
@@ -109,10 +161,15 @@ export default class extends Controller {
               title: (context) => context[0].label,
               label: (context) => {
                 const value = context.raw
-                if (context.datasetIndex === 0) {
-                  return value === null ? `Portfolio after ${horizon} years: Not enough history yet` : `Portfolio after ${horizon} years: ${this.formatAxisCurrency(value)}`
+                if (context.dataset.yAxisID === "y1") {
+                  return value === null ? "CAPE at start: n/a" : `CAPE at start: ${value.toFixed(1)}`
                 }
-                return value === null ? "CAPE at start: n/a" : `CAPE at start: ${value.toFixed(1)}`
+                const scenario = scenarios[context.datasetIndex]
+                if (value === null) {
+                  const before = scenario.first_year && rows[context.dataIndex].year < scenario.first_year
+                  return before ? `${scenario.label}: n/a before ${scenario.first_year}` : `${scenario.label}: Not enough history yet`
+                }
+                return `${scenario.label}: ${this.formatAxisCurrency(value)}`
               },
               footer: (context) => {
                 const event = eventByYear.get(Number(context[0].label))

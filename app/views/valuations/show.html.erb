@@ -43,7 +43,7 @@
       </p>
       <p>
         It matters for withdrawals because paying more for the same earnings tends to mean lower returns afterwards.
-        Below, each dot is a retirement start year, placed by the CAPE that January and by the highest first-year withdrawal rate that still lasted 30 years.
+        Below, the chart compares the CAPE at the start of each year with what a retirement that began that year was worth 10 to 50 years later, and the table groups start years by CAPE.
       </p>
     </div>
   </section>
@@ -65,43 +65,11 @@
   </section>
 
   <section class="bg-white rounded-xl border border-gray-200 shadow-sm p-6"
-           data-controller="valuation-chart"
-           data-valuation-chart-points-value="<%= points.to_json %>"
-           data-valuation-chart-in-progress-value="<%= @analysis.in_progress_points.to_json %>"
-           data-valuation-chart-today-value="<%= today.to_json %>"
-           data-valuation-chart-threshold-value="<%= ValuationAnalysis::THRESHOLD %>">
-    <h2 class="text-2xl font-bold text-[#1F2937] mb-6">Starting valuation vs. highest safe withdrawal rate</h2>
-
-    <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mb-4">
-      <div class="flex items-center gap-2">
-        <div class="w-3 h-3 rounded-full bg-[#16A34A]"></div>
-        <span class="text-sm text-[#6B7280] whitespace-nowrap">4% lasted 30 years</span>
-      </div>
-      <div class="flex items-center gap-2">
-        <div class="w-3 h-3 rounded-full bg-[#DC2626]"></div>
-        <span class="text-sm text-[#6B7280] whitespace-nowrap">4% ran out</span>
-      </div>
-      <div class="flex items-center gap-2">
-        <div class="w-3 h-3 rounded-full bg-white border-2 border-[#6B7280]"></div>
-        <span class="text-sm text-[#6B7280] whitespace-nowrap">Still running (<%= ValuationAnalysis::IN_PROGRESS_MIN_YEARS %> to <%= ValuationAnalysis::HORIZON - 1 %> years in)</span>
-      </div>
-      <div class="flex items-center gap-2">
-        <div class="h-3 border-l border-dashed border-[#6B7280]"></div>
-        <span class="text-sm text-[#6B7280] whitespace-nowrap">Today</span>
-      </div>
-    </div>
-
-    <div class="relative w-full" style="height: 460px;">
-      <canvas data-valuation-chart-target="canvas"></canvas>
-    </div>
-    <p class="mt-3 text-sm text-[#6B7280]">Click a dot to see that year's retirement. 100% S&amp;P 500, no fees, before taxes. Hollow dots are retirements that started <%= ValuationAnalysis::IN_PROGRESS_MIN_YEARS %> to <%= ValuationAnalysis::HORIZON - 1 %> years ago; their value is the highest rate that has survived so far, which can only fall as years are added.</p>
-  </section>
-
-  <section class="bg-white rounded-xl border border-gray-200 shadow-sm p-6"
            data-controller="valuation-timeline"
            data-valuation-timeline-data-value="<%= @analysis.timeline.to_json %>"
            data-valuation-timeline-initial-amount-value="1000000"
            data-valuation-timeline-horizon-value="30"
+           data-valuation-timeline-scenarios-value="<%= Scenario::ALL.map { |sc| { key: sc.key, label: sc.label, color: sc.color, first_year: sc.first_year } }.to_json %>"
            data-valuation-timeline-data-through-value="<%= @analysis.data_through %>"
            data-valuation-timeline-events-value="<%= MarketEvents.all.to_json %>">
     <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 mb-2">
@@ -124,13 +92,23 @@
         </div>
       </div>
     </div>
-    <p class="text-sm text-[#6B7280] mb-6">Purple: portfolio after <span data-valuation-timeline-target="horizonLabel">30</span> years, starting with $1,000,000 and withdrawing 4%, 100% S&amp;P 500. Grey: CAPE that January.</p>
+    <p class="text-sm text-[#6B7280] mb-6">Lines: portfolio after <span data-valuation-timeline-target="horizonLabel">30</span> years, starting with $1,000,000 and withdrawing 4%, by investment mix. Grey: CAPE that January.</p>
+
+    <div class="flex flex-wrap gap-2 mb-4" role="group" aria-label="Portfolios shown">
+      <% Scenario::ALL.each do |scenario| %>
+        <button type="button"
+                data-valuation-timeline-target="chip"
+                data-scenario="<%= scenario.key %>"
+                data-action="valuation-timeline#toggleScenario"
+                aria-pressed="false"
+                data-color="<%= scenario.color %>"
+                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors border-gray-300 text-[#6B7280] bg-[#FAFAFA]">
+          <span class="w-2.5 h-2.5 rounded-full" style="background-color: #D1D5DB"></span><%= scenario.label %>
+        </button>
+      <% end %>
+    </div>
 
     <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mb-4">
-      <div class="flex items-center gap-2">
-        <div class="w-3 h-3 rounded-full bg-[#7C3AED]"></div>
-        <span class="text-sm text-[#6B7280] whitespace-nowrap">Portfolio after <span data-valuation-timeline-target="horizonLabel">30</span> years</span>
-      </div>
       <div class="flex items-center gap-2">
         <div class="w-3 h-3 rounded-full bg-[#6B7280]"></div>
         <span class="text-sm text-[#6B7280] whitespace-nowrap">CAPE at start</span>
@@ -152,6 +130,7 @@
 
   <section class="max-w-4xl">
     <h2 class="text-2xl font-bold text-[#1F2937] mb-4">Outcomes by starting CAPE</h2>
+    <p class="text-[#6B7280] mb-4">Highest first-year rate that lasted 30 years, grouped by the CAPE when each retirement started. 100% S&amp;P 500, no fees.</p>
     <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
       <table class="w-full text-sm text-left" data-valuation-buckets>
         <thead class="bg-gray-50 text-[#6B7280]">

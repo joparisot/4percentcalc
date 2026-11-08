@@ -50,14 +50,20 @@ class ValuationAnalysisTest < ActiveSupport::TestCase
     assert_equal calculator.latest_cape[:year], timeline.last[:year]
 
     entry = timeline.find { |e| e[:year] == 1966 }
-    assert_equal 0, entry[:values][30]
-    assert_operator entry[:values][10], :>, 0
+    assert_equal 0, entry[:values]["sp500"][30]
+    assert_operator entry[:values]["sp500"][10], :>, 0
+    assert_equal 0, entry[:values]["sp50"][30]
+    assert_not entry[:values].key?("nasdaq")
+
+    later = timeline.find { |e| e[:year] == 1975 }
+    assert_operator later[:values]["sp50"][30], :>, 0
+    assert_operator later[:values]["nasdaq"][30], :>, 0
     assert_in_delta 24.06, entry[:cape], 0.01
 
     entry = timeline.find { |e| e[:year] == 2000 }
-    assert_operator entry[:values][20], :>, 0
-    assert_nil entry[:values][30]
+    assert_operator entry[:values]["sp500"][20], :>, 0
+    assert_nil entry[:values]["sp500"][30]
     assert_in_delta 43.8, entry[:cape], 0.1
-    assert_not_nil timeline.first[:values][50]
+    assert_not_nil timeline.first[:values]["sp500"][50]
   end
 end
