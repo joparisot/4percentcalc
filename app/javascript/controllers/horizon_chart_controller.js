@@ -3,7 +3,7 @@ import { marketEventsPlugin } from "controllers/market_events"
 import { styleChip } from "controllers/scenario_chip"
 
 export default class extends Controller {
-  static targets = ["canvas", "dropdown", "title", "scaleButton", "scaleNote", "chip"]
+  static targets = ["canvas", "dropdown", "title", "chip"]
   static values = {
     series: Object,
     scenarios: Array,
@@ -12,8 +12,6 @@ export default class extends Controller {
     horizon: { type: Number, default: 30 }
   }
 
-  static SCALE_KEY = "horizonChartScale"
-  static SCALES = ["linear", "logarithmic"]
   static SCENARIOS_KEY = "horizonChartScenarios"
   static DEFAULT_SCENARIOS = ["sp500", "sp50"]
 
@@ -44,14 +42,6 @@ export default class extends Controller {
       hiddenField.value = this.horizonValue
     }
     this.dispatch("horizonChanged", { target: window })
-  }
-
-  setScale(event) {
-    const scale = event.currentTarget.dataset.scale
-    if (!this.constructor.SCALES.includes(scale)) return
-
-    try { localStorage.setItem(this.constructor.SCALE_KEY, scale) } catch (e) {}
-    this.renderChart()
   }
 
   get scenarioKeys() {
@@ -98,24 +88,6 @@ export default class extends Controller {
     this.canvasTarget.dataset.renderedScenarios = selected.join(",")
   }
 
-  // An explicit choice wins; otherwise long horizons, where outliers dwarf typical outcomes, default to log.
-  get scale() {
-    let stored = null
-    try { stored = localStorage.getItem(this.constructor.SCALE_KEY) } catch (e) {}
-    if (this.constructor.SCALES.includes(stored)) return stored
-    return this.horizonValue >= 40 ? "logarithmic" : "linear"
-  }
-
-  updateScaleControls(scale) {
-    this.scaleButtonTargets.forEach((button) => {
-      button.setAttribute("aria-pressed", String(button.dataset.scale === scale))
-    })
-    if (this.hasScaleNoteTarget) {
-      this.scaleNoteTarget.classList.toggle("hidden", scale !== "logarithmic")
-    }
-    this.canvasTarget.dataset.renderedScale = scale
-  }
-
   updateTitle() {
     if (this.hasTitleTarget) {
       this.titleTarget.textContent = `Portfolio Value After ${this.horizonValue} Years per Starting Year`
@@ -155,18 +127,11 @@ export default class extends Controller {
     this.canvasTarget.dataset.markedEvents = events.map(e => e.year).join(",")
     const initialAmount = this.initialAmountValue
     const horizon = this.horizonValue
-    const scale = this.scale
-    const log = scale === "logarithmic"
-    // Log axes can't show $0, so depleted years sit on the axis floor (the tooltip still says they ran out).
-    const smallest = Math.min(...rawByScenario.flatMap(raw => raw.filter(v => v > 0)), initialAmount)
-    const floor = 10 ** Math.floor(Math.log10(smallest))
-    const plot = (series) => log ? series.map(v => v === null ? null : Math.max(v, floor)) : series
-    this.updateScaleControls(scale)
 
     const referenceLineData = values.map(v => v === null ? null : initialAmount)
     const lineDataset = (scenario, raw) => ({
       label: scenario.label,
-      data: plot(raw),
+      data: raw,
       borderColor: scenario.color,
       backgroundColor: scenario.color,
       borderWidth: scenario.key === "sp500" ? 3 : 2,
@@ -276,8 +241,9 @@ export default class extends Controller {
             }
           },
           y: {
-            type: scale,
-            ...(log ? { min: floor } : { min: 0, grace: '5%' }),
+            type: 'linear',
+            min: 0,
+            grace: '5%',
             grid: {
               color: 'rgba(229, 231, 235, 0.5)'
             },
@@ -286,7 +252,7 @@ export default class extends Controller {
               font: {
                 size: 12
               },
-              callback: (value) => (log && !this.isRoundLogTick(value)) ? '' : this.formatAxisCurrency(value)
+              callback: (value) => this.formatAxisCurrency(value)
             }
           }
         }
@@ -334,11 +300,6 @@ export default class extends Controller {
         ctx.restore()
       }
     }
-  }
-
-  isRoundLogTick(value) {
-    const mantissa = value / 10 ** Math.floor(Math.log10(value))
-    return Math.abs(mantissa - 1) < 1e-6
   }
 
   formatAxisCurrency(value) {
