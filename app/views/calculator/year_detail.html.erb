@@ -29,6 +29,12 @@
   <section class="max-w-4xl">
     <h1 class="text-3xl font-bold tracking-tight text-[#1F2937]"><%= @summary.headline %></h1>
     <p class="mt-3 text-lg leading-relaxed text-[#374151]"><%= @summary.sentences.join(" ") %></p>
+    <% if (start_cape = @calculator.cape(@starting_year)) %>
+      <%= link_to valuations_path, class: "mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-200 bg-white hover:border-[#7C3AED]/40 hover:bg-[#EDE9FE] text-sm transition-colors" do %>
+        <span class="font-bold text-[#1F2937]">CAPE at start: <%= number_with_precision(start_cape, precision: 1) %></span>
+        <span class="text-[#6B7280]">&middot; higher than <%= @valuations.percentile(start_cape) %>% of start years</span>
+      <% end %>
+    <% end %>
   </section>
 
   <section class="bg-white rounded-xl border border-gray-200 shadow-sm p-6" data-controller="chart" data-chart-data-value="<%= @chart_data.to_json %>" data-chart-comparison-value="<%= @comparison_chart_data.to_json %>" data-chart-comparison-label-value="<%= @comparison.label %>" data-chart-comparison-color-value="<%= @comparison.color %>" data-chart-events-value="<%= MarketEvents.all.to_json %>" data-chart-starting-year-value="<%= @starting_year %>">

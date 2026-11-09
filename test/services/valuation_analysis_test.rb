@@ -1,0 +1,69 @@
+require "test_helper"
+
+class ValuationAnalysisTest < ActiveSupport::TestCase
+  def setup
+    @analysis = ValuationAnalysis.new(Calculator.new)
+  end
+
+  test "buckets sum to the number of points" do
+    assert_equal @analysis.points.size, @analysis.buckets.sum { |bucket| bucket[:count] }
+  end
+
+  test "today's CAPE is present" do
+    today = @analysis.today
+    assert_equal 2026, today[:year]
+    assert_operator today[:cape], :>, 0
+  end
+
+  test "percentile is share of start years strictly below" do
+    assert_equal 100, @analysis.percentile(@analysis.today[:cape])
+    assert_operator @analysis.percentile(@analysis.highest_start[:cape]), :>=, 95
+    assert_equal 0, @analysis.percentile(0)
+  end
+
+  test "points are sorted and carry earnings yield" do
+    years = @analysis.points.map { |p| p[:year] }
+    assert_equal years.sort, years
+    point = @analysis.points.first
+    assert_equal (100.0 / point[:cape]).round(1), point[:earnings_yield]
+  end
+
+  test "correlation is strongly negative" do
+    assert_operator @analysis.correlation, :<, -0.7
+  end
+
+  test "in-progress points cover start years 20 to 29 years in" do
+    calculator = Calculator.new
+    expected = calculator.available_years.select { |y| calculator.years_of_data(y).between?(20, 29) }
+    assert_equal expected, @analysis.in_progress_points.map { |p| p[:year] }
+
+    point = @analysis.in_progress_points.find { |p| p[:year] == 2000 }
+    assert_in_delta 43.8, point[:cape], 0.1
+    assert_equal calculator.available_years.last - 2000 + 1, point[:years_elapsed]
+    assert_operator point[:max_swr_so_far], :>, 0
+  end
+
+  test "timeline spans every year through today's CAPE" do
+    calculator = Calculator.new
+    timeline = @analysis.timeline
+    assert_equal calculator.available_years.first, timeline.first[:year]
+    assert_equal calculator.latest_cape[:year], timeline.last[:year]
+
+    entry = timeline.find { |e| e[:year] == 1966 }
+    assert_equal 0, entry[:values]["sp500"][30]
+    assert_operator entry[:values]["sp500"][10], :>, 0
+    assert_equal 0, entry[:values]["sp50"][30]
+    assert_not entry[:values].key?("nasdaq")
+
+    later = timeline.find { |e| e[:year] == 1975 }
+    assert_operator later[:values]["sp50"][30], :>, 0
+    assert_operator later[:values]["nasdaq"][30], :>, 0
+    assert_in_delta 24.06, entry[:cape], 0.01
+
+    entry = timeline.find { |e| e[:year] == 2000 }
+    assert_operator entry[:values]["sp500"][20], :>, 0
+    assert_nil entry[:values]["sp500"][30]
+    assert_in_delta 43.8, entry[:cape], 0.1
+    assert_not_nil timeline.first[:values]["sp500"][50]
+  end
+end

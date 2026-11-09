@@ -4,16 +4,24 @@
 <header class="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-gray-200">
   <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between gap-3 h-16">
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3 min-w-0">
         <%= render "calculator/logo_mark" %>
-        <h1 class="text-base sm:text-xl font-bold tracking-tight text-[#1F2937] whitespace-nowrap">The 4% Rule Calculator</h1>
+        <h1 class="text-base sm:text-xl font-bold tracking-tight text-[#1F2937] truncate">The 4% Rule Calculator</h1>
       </div>
+      <div class="shrink-0 flex items-center gap-2">
+      <%= link_to valuations_path, class: "shrink-0 flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-[#1F2937] text-sm font-semibold transition-colors" do %>
+        <svg class="hidden sm:block w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+        </svg>
+        Valuations
+      <% end %>
       <%= link_to methodology_path, class: "shrink-0 flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 text-[#7C3AED] text-sm font-semibold transition-colors" do %>
         <svg class="hidden sm:block w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
         </svg>
         Methodology
       <% end %>
+      </div>
     </div>
   </div>
 </header>
