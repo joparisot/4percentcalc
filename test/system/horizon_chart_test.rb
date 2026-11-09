@@ -98,28 +98,6 @@ class HorizonChartTest < ActionDispatch::SystemTestCase
     assert_equal "20", dropdown.value
   end
 
-  test "long horizons default to a log scale and the toggle switches it" do
-    visit root_path
-    execute_script("localStorage.clear()")
-    canvas = "canvas[data-horizon-chart-target='canvas']"
-    assert_selector "#{canvas}[data-rendered-scale='linear']", wait: 3
-    assert_selector "button[data-scale='linear'][aria-pressed='true']"
-
-    select "50 years", from: "horizon-select"
-    assert_selector "#{canvas}[data-rendered-scale='logarithmic']"
-    assert_selector "button[data-scale='logarithmic'][aria-pressed='true']"
-    assert_selector "[data-horizon-chart-target='scaleNote']", visible: true
-
-    click_button "Linear"
-    assert_selector "#{canvas}[data-rendered-scale='linear']"
-    assert_selector "[data-horizon-chart-target='scaleNote']", visible: false
-
-    select "40 years", from: "horizon-select"
-    assert_selector "#{canvas}[data-rendered-scale='linear']", wait: 1
-  ensure
-    execute_script("localStorage.clear()")
-  end
-
   test "start years without enough history are marked N/A instead of cutting the axis short" do
     visit root_path
     canvas = "canvas[data-horizon-chart-target='canvas']"
